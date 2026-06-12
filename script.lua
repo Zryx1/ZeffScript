@@ -1,6 +1,6 @@
 -- ============================================
--- ZEFF VORTEX - FULL SCRIPT
--- MENU ESP (YANG UDAH JALAN) + KATEGORI DI ATAS
+-- ZEFF VORTEX - FULL SCRIPT FIXED
+-- MENU LENGKAP + DRAG + MINIMIZE + TOMBOL PEDANG
 -- FITUR: ESP + MULTI HIT + SPEED/JUMP BOOST
 -- ============================================
 
@@ -333,23 +333,29 @@ local function CreateSwordButton()
     if not screenGui then return end
     
     swordBtn = Instance.new("TextButton")
-    swordBtn.Size = UDim2.new(0, 50, 0, 50)
-    swordBtn.Position = UDim2.new(1, -65, 1, -180)
+    swordBtn.Size = UDim2.new(0, 55, 0, 55)
+    swordBtn.Position = UDim2.new(1, -70, 1, -190)
     swordBtn.Text = "⚔️"
     swordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    swordBtn.TextSize = 26
+    swordBtn.TextSize = 28
     swordBtn.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
-    swordBtn.BackgroundTransparency = 0.2
+    swordBtn.BackgroundTransparency = 0.15
     swordBtn.BorderSizePixel = 0
     swordBtn.Parent = screenGui
     
     local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 25)
+    btnCorner.CornerRadius = UDim.new(0, 27)
     btnCorner.Parent = swordBtn
     
+    local glow = Instance.new("UIStroke")
+    glow.Thickness = 1
+    glow.Color = Color3.fromRGB(255, 255, 255)
+    glow.Transparency = 0.5
+    glow.Parent = swordBtn
+    
     local led = Instance.new("Frame")
-    led.Size = UDim2.new(0, 10, 0, 10)
-    led.Position = UDim2.new(1, -12, 1, -12)
+    led.Size = UDim2.new(0, 12, 0, 12)
+    led.Position = UDim2.new(1, -14, 1, -14)
     led.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
     led.BorderSizePixel = 0
     led.Parent = swordBtn
@@ -374,8 +380,8 @@ local function CreateSwordButton()
         if not isDragging then return end
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            local newX = math.clamp(startPos.X.Offset + delta.X, 0, UDim2.new(1, -55, 0, 0).X.Offset)
-            local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, UDim2.new(0, 0, 1, -55).Y.Offset)
+            local newX = math.clamp(startPos.X.Offset + delta.X, 0, UDim2.new(1, -70, 0, 0).X.Offset)
+            local newY = math.clamp(startPos.Y.Offset + delta.Y, 50, UDim2.new(0, 0, 1, -60).Y.Offset)
             swordBtn.Position = UDim2.new(startPos.X.Scale, newX, startPos.Y.Scale, newY)
         end
     end)
@@ -384,7 +390,190 @@ local function CreateSwordButton()
     swordBtn.MouseButton1Click:Connect(function()
         multiHitEnabled = not multiHitEnabled
         led.BackgroundColor3 = multiHitEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        swordBtn.BackgroundColor3 = multiHitEnabled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(155, 0, 255)
     end)
+end
+
+-- ============================================
+-- FUNGSI CREATE UI ELEMENTS
+-- ============================================
+local function CreateInfoBox(parent, text, yPos, state)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -16, 0, 40)
+    frame.Position = UDim2.new(0, 8, 0, yPos)
+    frame.BackgroundColor3 = state and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+    frame.BackgroundTransparency = 0
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Position = UDim2.new(0, 12, 0, 0)
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(0.35, 0, 1, 0)
+    status.Position = UDim2.new(0.65, 0, 0, 0)
+    status.Text = state and "✅ ACTIVE" or "❌ INACTIVE"
+    status.TextColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+    status.BackgroundTransparency = 1
+    status.Font = Enum.Font.GothamBold
+    status.TextSize = 11
+    status.TextXAlignment = Enum.TextXAlignment.Right
+    status.Parent = frame
+    
+    return {frame = frame, status = status}
+end
+
+local function CreateToggleButton(parent, text, yPos, state)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -16, 0, 38)
+    btn.Position = UDim2.new(0, 8, 0, yPos)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundColor3 = state and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.Parent = parent
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = btn
+    
+    local pad = Instance.new("UIPadding")
+    pad.PaddingLeft = UDim.new(0, 12)
+    pad.Parent = btn
+    
+    local status = Instance.new("TextLabel")
+    status.Size = UDim2.new(0.35, 0, 1, 0)
+    status.Position = UDim2.new(0.65, 0, 0, 0)
+    status.Text = state and "✅ ON" or "❌ OFF"
+    status.TextColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+    status.BackgroundTransparency = 1
+    status.Font = Enum.Font.GothamBold
+    status.TextSize = 12
+    status.TextXAlignment = Enum.TextXAlignment.Right
+    status.Parent = btn
+    
+    return btn, status
+end
+
+local function CreateSliderControl(parent, label, yPos, value, minVal, maxVal)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -16, 0, 44)
+    frame.Position = UDim2.new(0, 8, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+    frame.BackgroundTransparency = 0
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    local labelText = Instance.new("TextLabel")
+    labelText.Size = UDim2.new(0.45, 0, 1, 0)
+    labelText.Position = UDim2.new(0, 10, 0, 0)
+    labelText.Text = label
+    labelText.TextColor3 = Color3.fromRGB(200, 200, 220)
+    labelText.BackgroundTransparency = 1
+    labelText.Font = Enum.Font.GothamBold
+    labelText.TextSize = 11
+    labelText.TextXAlignment = Enum.TextXAlignment.Left
+    labelText.Parent = frame
+    
+    local valueText = Instance.new("TextLabel")
+    valueText.Size = UDim2.new(0.2, 0, 1, 0)
+    valueText.Position = UDim2.new(0.5, 0, 0, 0)
+    valueText.Text = tostring(value)
+    valueText.TextColor3 = Color3.fromRGB(155, 0, 255)
+    valueText.BackgroundTransparency = 1
+    valueText.Font = Enum.Font.GothamBold
+    valueText.TextSize = 12
+    valueText.TextXAlignment = Enum.TextXAlignment.Center
+    valueText.Parent = frame
+    
+    local minus = Instance.new("TextButton")
+    minus.Size = UDim2.new(0, 28, 0, 28)
+    minus.Position = UDim2.new(1, -65, 0.5, -14)
+    minus.Text = "-"
+    minus.TextColor3 = Color3.fromRGB(255, 255, 255)
+    minus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
+    minus.Font = Enum.Font.GothamBold
+    minus.TextSize = 16
+    minus.Parent = frame
+    
+    local plus = Instance.new("TextButton")
+    plus.Size = UDim2.new(0, 28, 0, 28)
+    plus.Position = UDim2.new(1, -33, 0.5, -14)
+    plus.Text = "+"
+    plus.TextColor3 = Color3.fromRGB(255, 255, 255)
+    plus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
+    plus.Font = Enum.Font.GothamBold
+    plus.TextSize = 16
+    plus.Parent = frame
+    
+    local btnCorner1 = Instance.new("UICorner")
+    btnCorner1.CornerRadius = UDim.new(0, 6)
+    btnCorner1.Parent = minus
+    
+    local btnCorner2 = Instance.new("UICorner")
+    btnCorner2.CornerRadius = UDim.new(0, 6)
+    btnCorner2.Parent = plus
+    
+    return {frame = frame, valueText = valueText, minus = minus, plus = plus}
+end
+
+local function CreateModeToggle(parent, label, yPos, mode)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -16, 0, 40)
+    frame.Position = UDim2.new(0, 8, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+    frame.BackgroundTransparency = 0
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    local labelText = Instance.new("TextLabel")
+    labelText.Size = UDim2.new(0.5, 0, 1, 0)
+    labelText.Position = UDim2.new(0, 10, 0, 0)
+    labelText.Text = label
+    labelText.TextColor3 = Color3.fromRGB(200, 200, 220)
+    labelText.BackgroundTransparency = 1
+    labelText.Font = Enum.Font.GothamBold
+    labelText.TextSize = 11
+    labelText.TextXAlignment = Enum.TextXAlignment.Left
+    labelText.Parent = frame
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.4, 0, 0.7, 0)
+    btn.Position = UDim2.new(0.55, 0, 0.15, 0)
+    btn.Text = (mode == "players") and "👤 PLAYERS" or "👾 ALL ENTITY"
+    btn.TextColor3 = Color3.fromRGB(155, 0, 255)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 10
+    btn.Parent = frame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = btn
+    
+    return btn
 end
 
 -- ============================================
@@ -412,8 +601,8 @@ local function CreateMainMenu()
     
     -- MAIN FRAME
     local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 320, 0, 450)
-    mainFrame.Position = UDim2.new(0.5, -160, 0.5, -225)
+    mainFrame.Size = UDim2.new(0, 340, 0, 480)
+    mainFrame.Position = UDim2.new(0.5, -170, 0.5, -240)
     mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
     mainFrame.BackgroundTransparency = 0
     mainFrame.BorderSizePixel = 0
@@ -425,14 +614,14 @@ local function CreateMainMenu()
     mainCorner.Parent = mainFrame
     
     local border = Instance.new("UIStroke")
-    border.Thickness = 1
+    border.Thickness = 1.5
     border.Color = Color3.fromRGB(155, 0, 255)
     border.Transparency = 0.3
     border.Parent = mainFrame
     
     -- HEADER
     local header = Instance.new("Frame")
-    header.Size = UDim2.new(1, 0, 0, 42)
+    header.Size = UDim2.new(1, 0, 0, 45)
     header.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
     header.BackgroundTransparency = 0.15
     header.BorderSizePixel = 0
@@ -449,23 +638,23 @@ local function CreateMainMenu()
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.BackgroundTransparency = 1
     title.Font = Enum.Font.GothamBold
-    title.TextSize = 14
+    title.TextSize = 15
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Parent = header
     
     local minBtn = Instance.new("TextButton")
-    minBtn.Size = UDim2.new(0, 28, 0, 28)
-    minBtn.Position = UDim2.new(1, -62, 0.5, -14)
+    minBtn.Size = UDim2.new(0, 30, 0, 30)
+    minBtn.Position = UDim2.new(1, -65, 0.5, -15)
     minBtn.Text = "─"
     minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     minBtn.BackgroundTransparency = 1
     minBtn.Font = Enum.Font.GothamBold
-    minBtn.TextSize = 16
+    minBtn.TextSize = 18
     minBtn.Parent = header
     
     local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.new(0, 28, 0, 28)
-    closeBtn.Position = UDim2.new(1, -32, 0.5, -14)
+    closeBtn.Size = UDim2.new(0, 30, 0, 30)
+    closeBtn.Position = UDim2.new(1, -32, 0.5, -15)
     closeBtn.Text = "✕"
     closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     closeBtn.BackgroundTransparency = 1
@@ -475,8 +664,8 @@ local function CreateMainMenu()
     
     -- ========== KATEGORI DI ATAS ==========
     local tabBar = Instance.new("Frame")
-    tabBar.Size = UDim2.new(1, -20, 0, 38)
-    tabBar.Position = UDim2.new(0, 10, 0, 50)
+    tabBar.Size = UDim2.new(1, -20, 0, 40)
+    tabBar.Position = UDim2.new(0, 10, 0, 55)
     tabBar.BackgroundTransparency = 1
     tabBar.Parent = mainFrame
     
@@ -487,7 +676,7 @@ local function CreateMainMenu()
     espTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     espTab.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
     espTab.Font = Enum.Font.GothamBold
-    espTab.TextSize = 12
+    espTab.TextSize = 13
     espTab.Parent = tabBar
     
     local multiTab = Instance.new("TextButton")
@@ -497,7 +686,7 @@ local function CreateMainMenu()
     multiTab.TextColor3 = Color3.fromRGB(200, 200, 220)
     multiTab.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
     multiTab.Font = Enum.Font.GothamBold
-    multiTab.TextSize = 12
+    multiTab.TextSize = 13
     multiTab.Parent = tabBar
     
     local boostTab = Instance.new("TextButton")
@@ -507,13 +696,13 @@ local function CreateMainMenu()
     boostTab.TextColor3 = Color3.fromRGB(200, 200, 220)
     boostTab.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
     boostTab.Font = Enum.Font.GothamBold
-    boostTab.TextSize = 12
+    boostTab.TextSize = 13
     boostTab.Parent = tabBar
     
     -- ========== CONTENT (BEDA BEDA PER TAB) ==========
     local contentContainer = Instance.new("ScrollingFrame")
-    contentContainer.Size = UDim2.new(1, -16, 1, -140)
-    contentContainer.Position = UDim2.new(0, 8, 0, 98)
+    contentContainer.Size = UDim2.new(1, 0, 1, -155)
+    contentContainer.Position = UDim2.new(0, 0, 0, 105)
     contentContainer.BackgroundTransparency = 1
     contentContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
     contentContainer.ScrollBarThickness = 3
@@ -529,13 +718,13 @@ local function CreateMainMenu()
     
     local yEsp = 0
     
-    local masterBtn = CreateToggleButton(espContent, "🔘 MASTER ESP", yEsp, masterEnabled)
+    local masterBtn, masterStatus = CreateToggleButton(espContent, "🔘 MASTER ESP", yEsp, masterEnabled)
     yEsp = yEsp + 48
-    local boxBtn = CreateToggleButton(espContent, "📦 BOX ESP", yEsp, espBoxEnabled)
+    local boxBtn, boxStatus = CreateToggleButton(espContent, "📦 BOX ESP", yEsp, espBoxEnabled)
     yEsp = yEsp + 43
-    local tracerBtn = CreateToggleButton(espContent, "📏 TRACER ESP", yEsp, espTracerEnabled)
+    local tracerBtn, tracerStatus = CreateToggleButton(espContent, "📏 TRACER ESP", yEsp, espTracerEnabled)
     yEsp = yEsp + 43
-    local nameBtn = CreateToggleButton(espContent, "🏷️ NAME ESP", yEsp, espNameEnabled)
+    local nameBtn, nameStatus = CreateToggleButton(espContent, "🏷️ NAME ESP", yEsp, espNameEnabled)
     yEsp = yEsp + 43
     local thickControl = CreateSliderControl(espContent, "📏 KETEBALAN", yEsp, espThickness, 1, 5)
     yEsp = yEsp + 50
@@ -577,196 +766,16 @@ local function CreateMainMenu()
     
     local yBoost = 0
     
-    local speedBtn = CreateToggleButton(boostContent, "⚡ SPEED BOOST", yBoost, speedEnabled)
+    local speedBtn, speedStatus = CreateToggleButton(boostContent, "⚡ SPEED BOOST", yBoost, speedEnabled)
     yBoost = yBoost + 48
     local speedControl = CreateSliderControl(boostContent, "🏃 SPEED (x)", yBoost, speedMult, 1, 100)
     yBoost = yBoost + 50
     
-    local jumpBtn = CreateToggleButton(boostContent, "🦘 JUMP BOOST", yBoost, jumpEnabled)
+    local jumpBtn, jumpStatus = CreateToggleButton(boostContent, "🦘 JUMP BOOST", yBoost, jumpEnabled)
     yBoost = yBoost + 48
     local jumpControl = CreateSliderControl(boostContent, "📈 JUMP (x)", yBoost, jumpMult, 1, 100)
     yBoost = yBoost + 50
     boostContent.CanvasSize = UDim2.new(0, 0, 0, yBoost + 10)
-    
-    -- ========== FUNGSI CREATE UI ==========
-    function CreateInfoBox(parent, text, yPos, state)
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, 0, 0, 40)
-        frame.Position = UDim2.new(0, 0, 0, yPos)
-        frame.BackgroundColor3 = state and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
-        frame.BackgroundTransparency = 0
-        frame.BorderSizePixel = 0
-        frame.Parent = parent
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
-        corner.Parent = frame
-        
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(0.6, 0, 1, 0)
-        label.Position = UDim2.new(0, 12, 0, 0)
-        label.Text = text
-        label.TextColor3 = Color3.fromRGB(255, 255, 255)
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.GothamBold
-        label.TextSize = 12
-        label.TextXAlignment = Enum.TextXAlignment.Left
-        label.Parent = frame
-        
-        local status = Instance.new("TextLabel")
-        status.Size = UDim2.new(0.35, 0, 1, 0)
-        status.Position = UDim2.new(0.65, 0, 0, 0)
-        status.Text = state and "✅ ACTIVE" or "❌ INACTIVE"
-        status.TextColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-        status.BackgroundTransparency = 1
-        status.Font = Enum.Font.GothamBold
-        status.TextSize = 11
-        status.TextXAlignment = Enum.TextXAlignment.Right
-        status.Parent = frame
-        
-        return {frame = frame, status = status}
-    end
-    
-    function CreateToggleButton(parent, text, yPos, state)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(1, 0, 0, 38)
-        btn.Position = UDim2.new(0, 0, 0, yPos)
-        btn.Text = text
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.BackgroundColor3 = state and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 13
-        btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.Parent = parent
-        
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 8)
-        btnCorner.Parent = btn
-        
-        local pad = Instance.new("UIPadding")
-        pad.PaddingLeft = UDim.new(0, 12)
-        pad.Parent = btn
-        
-        local status = Instance.new("TextLabel")
-        status.Size = UDim2.new(0.35, 0, 1, 0)
-        status.Position = UDim2.new(0.65, 0, 0, 0)
-        status.Text = state and "✅ ON" or "❌ OFF"
-        status.TextColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-        status.BackgroundTransparency = 1
-        status.Font = Enum.Font.GothamBold
-        status.TextSize = 12
-        status.TextXAlignment = Enum.TextXAlignment.Right
-        status.Parent = btn
-        
-        return btn, status
-    end
-    
-    function CreateSliderControl(parent, label, yPos, value, minVal, maxVal)
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, 0, 0, 44)
-        frame.Position = UDim2.new(0, 0, 0, yPos)
-        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-        frame.BackgroundTransparency = 0
-        frame.BorderSizePixel = 0
-        frame.Parent = parent
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
-        corner.Parent = frame
-        
-        local labelText = Instance.new("TextLabel")
-        labelText.Size = UDim2.new(0.45, 0, 1, 0)
-        labelText.Position = UDim2.new(0, 10, 0, 0)
-        labelText.Text = label
-        labelText.TextColor3 = Color3.fromRGB(200, 200, 220)
-        labelText.BackgroundTransparency = 1
-        labelText.Font = Enum.Font.GothamBold
-        labelText.TextSize = 11
-        labelText.TextXAlignment = Enum.TextXAlignment.Left
-        labelText.Parent = frame
-        
-        local valueText = Instance.new("TextLabel")
-        valueText.Size = UDim2.new(0.2, 0, 1, 0)
-        valueText.Position = UDim2.new(0.5, 0, 0, 0)
-        valueText.Text = tostring(value)
-        valueText.TextColor3 = Color3.fromRGB(155, 0, 255)
-        valueText.BackgroundTransparency = 1
-        valueText.Font = Enum.Font.GothamBold
-        valueText.TextSize = 12
-        valueText.TextXAlignment = Enum.TextXAlignment.Center
-        valueText.Parent = frame
-        
-        local minus = Instance.new("TextButton")
-        minus.Size = UDim2.new(0, 28, 0, 28)
-        minus.Position = UDim2.new(1, -65, 0.5, -14)
-        minus.Text = "-"
-        minus.TextColor3 = Color3.fromRGB(255, 255, 255)
-        minus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
-        minus.Font = Enum.Font.GothamBold
-        minus.TextSize = 16
-        minus.Parent = frame
-        
-        local plus = Instance.new("TextButton")
-        plus.Size = UDim2.new(0, 28, 0, 28)
-        plus.Position = UDim2.new(1, -33, 0.5, -14)
-        plus.Text = "+"
-        plus.TextColor3 = Color3.fromRGB(255, 255, 255)
-        plus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
-        plus.Font = Enum.Font.GothamBold
-        plus.TextSize = 16
-        plus.Parent = frame
-        
-        local btnCorner1 = Instance.new("UICorner")
-        btnCorner1.CornerRadius = UDim.new(0, 6)
-        btnCorner1.Parent = minus
-        
-        local btnCorner2 = Instance.new("UICorner")
-        btnCorner2.CornerRadius = UDim.new(0, 6)
-        btnCorner2.Parent = plus
-        
-        return {frame = frame, valueText = valueText, minus = minus, plus = plus}
-    end
-    
-    function CreateModeToggle(parent, label, yPos, mode)
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, 0, 0, 40)
-        frame.Position = UDim2.new(0, 0, 0, yPos)
-        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-        frame.BackgroundTransparency = 0
-        frame.BorderSizePixel = 0
-        frame.Parent = parent
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
-        corner.Parent = frame
-        
-        local labelText = Instance.new("TextLabel")
-        labelText.Size = UDim2.new(0.5, 0, 1, 0)
-        labelText.Position = UDim2.new(0, 10, 0, 0)
-        labelText.Text = label
-        labelText.TextColor3 = Color3.fromRGB(200, 200, 220)
-        labelText.BackgroundTransparency = 1
-        labelText.Font = Enum.Font.GothamBold
-        labelText.TextSize = 11
-        labelText.TextXAlignment = Enum.TextXAlignment.Left
-        labelText.Parent = frame
-        
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0.4, 0, 0.7, 0)
-        btn.Position = UDim2.new(0.55, 0, 0.15, 0)
-        btn.Text = (mode == "players") and "👤 PLAYERS" or "👾 ALL ENTITY"
-        btn.TextColor3 = Color3.fromRGB(155, 0, 255)
-        btn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 10
-        btn.Parent = frame
-        
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 6)
-        btnCorner.Parent = btn
-        
-        return btn
-    end
     
     -- ========== TAB SWITCH ==========
     local function SwitchTab(tab)
@@ -781,6 +790,9 @@ local function CreateMainMenu()
         espContent.Visible = (tab == "esp")
         multiContent.Visible = (tab == "multi")
         boostContent.Visible = (tab == "boost")
+        
+        -- Reset scrolling position
+        contentContainer.CanvasPosition = Vector2.new(0, 0)
     end
     
     espTab.MouseButton1Click:Connect(function() SwitchTab("esp") end)
@@ -793,7 +805,7 @@ local function CreateMainMenu()
         masterEnabled = not masterEnabled
         masterStatus.Text = masterEnabled and "✅ ON" or "❌ OFF"
         masterStatus.TextColor3 = masterEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-        masterBtn.BackgroundColor3 = masterEnabled and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(80, 0, 120)
+        masterBtn.BackgroundColor3 = masterEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
     end)
     
     boxBtn.MouseButton1Click:Connect(function()
@@ -931,9 +943,11 @@ local function CreateMainMenu()
         if not dragging then return end
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             local delta = input.Position - dragStart
+            local newX = math.clamp(startPos.X.Offset + delta.X, -mainFrame.Size.X.Offset + 10, UDim2.new(1, -10, 0, 0).X.Offset)
+            local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, UDim2.new(0, 0, 1, -mainFrame.Size.Y.Offset).Y.Offset)
             mainFrame.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+                startPos.X.Scale, newX,
+                startPos.Y.Scale, newY
             )
         end
     end)
@@ -941,13 +955,13 @@ local function CreateMainMenu()
     -- ========== MINIMIZE ==========
     local function ToggleMinimize()
         if minimized then
-            mainFrame:TweenSize(UDim2.new(0, 320, 0, 450), "Out", "Quad", 0.2, true)
+            mainFrame:TweenSize(UDim2.new(0, 340, 0, 480), "Out", "Quad", 0.2, true)
             tabBar.Visible = true
             contentContainer.Visible = true
             minBtn.Text = "─"
             minimized = false
         else
-            mainFrame:TweenSize(UDim2.new(0, 180, 0, 42), "Out", "Quad", 0.2, true)
+            mainFrame:TweenSize(UDim2.new(0, 180, 0, 45), "Out", "Quad", 0.2, true)
             tabBar.Visible = false
             contentContainer.Visible = false
             minBtn.Text = "□"

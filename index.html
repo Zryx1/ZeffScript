@@ -1,10 +1,359 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Zeff Project - VORTEX</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ZEFF VORTEX</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 50%, #0a0a0f 0%, #050508 100%);
+            font-family: 'Courier New', 'Poppins', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Grid background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(155, 0, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(155, 0, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+        
+        /* Glitch overlay */
+        body::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.3) 0px,
+                rgba(0, 0, 0, 0.3) 2px,
+                transparent 2px,
+                transparent 8px
+            );
+            pointer-events: none;
+        }
+        
+        .container {
+            text-align: center;
+            z-index: 10;
+            padding: 20px;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        /* VORTEX TEXT NEON */
+        .vortex-title {
+            margin-bottom: 50px;
+            position: relative;
+        }
+        
+        .vortex {
+            font-size: clamp(3rem, 12vw, 7rem);
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #9b00ff 0%, #d400ff 40%, #bf00ff 60%, #9b00ff 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradientShift 3s ease infinite, textGlitch 2s infinite;
+            text-shadow: 0 0 30px rgba(155, 0, 255, 0.5);
+            position: relative;
+            display: inline-block;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes textGlitch {
+            0%, 100% { 
+                text-shadow: 0 0 30px rgba(155, 0, 255, 0.5);
+                transform: skew(0deg);
+            }
+            95% { 
+                text-shadow: 0 0 30px rgba(155, 0, 255, 0.5);
+                transform: skew(0deg);
+            }
+            96% { 
+                text-shadow: -2px 0 #ff00ff, 2px 2px #00ffff;
+                transform: skew(2deg);
+            }
+            97% { 
+                text-shadow: 2px 0 #ff00ff, -2px -2px #00ffff;
+                transform: skew(-2deg);
+            }
+        }
+        
+        /* Neon border bawah */
+        .vortex::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #9b00ff, #d400ff, #9b00ff, transparent);
+            border-radius: 3px;
+            animation: neonPulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes neonPulse {
+            0%, 100% {
+                opacity: 0.5;
+                box-shadow: 0 0 5px #9b00ff;
+            }
+            50% {
+                opacity: 1;
+                box-shadow: 0 0 20px #9b00ff, 0 0 30px #d400ff;
+            }
+        }
+        
+        /* CARD BOX */
+        .script-card {
+            background: rgba(10, 10, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin: 30px auto;
+            max-width: 680px;
+            border: 1px solid rgba(155, 0, 255, 0.3);
+            box-shadow: 0 0 40px rgba(155, 0, 255, 0.1);
+            animation: borderPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes borderPulse {
+            0%, 100% {
+                border-color: rgba(155, 0, 255, 0.3);
+                box-shadow: 0 0 40px rgba(155, 0, 255, 0.08);
+            }
+            50% {
+                border-color: rgba(212, 0, 255, 0.5);
+                box-shadow: 0 0 50px rgba(155, 0, 255, 0.2);
+            }
+        }
+        
+        .script-box {
+            background: #0a0a0f;
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin: 10px 0;
+            border: 1px solid #2a2a3a;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .script-box:hover {
+            border-color: #9b00ff;
+            box-shadow: 0 0 20px rgba(155, 0, 255, 0.15);
+        }
+        
+        .script-code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #e0e0e0;
+            word-break: break-all;
+            line-height: 1.5;
+            letter-spacing: 0.5px;
+        }
+        
+        .script-code span {
+            color: #9b00ff;
+        }
+        
+        /* Copy button */
+        .copy-btn {
+            background: linear-gradient(135deg, #9b00ff, #7a00cc);
+            border: none;
+            padding: 12px 32px;
+            border-radius: 40px;
+            margin-top: 18px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 15px rgba(155, 0, 255, 0.4);
+        }
+        
+        .copy-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px rgba(155, 0, 255, 0.6);
+            letter-spacing: 2px;
+        }
+        
+        .copy-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Toast notifikasi */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a1a2e;
+            color: #9b00ff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border: 1px solid #9b00ff;
+            box-shadow: 0 0 20px rgba(155, 0, 255, 0.3);
+            backdrop-filter: blur(8px);
+            font-family: monospace;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 50px;
+            font-size: 0.7rem;
+            color: #4a4a5a;
+            letter-spacing: 1px;
+        }
+        
+        .footer .zeff {
+            color: #9b00ff;
+            font-weight: bold;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .script-card {
+                padding: 18px 20px;
+                margin: 20px 15px;
+            }
+            .script-code {
+                font-size: 0.7rem;
+            }
+            .copy-btn {
+                padding: 10px 24px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>VORTEX Private Script</h1>
-    <p>Authorized only</p>
+    <div class="container">
+        <div class="vortex-title">
+            <h1 class="vortex">VORTEX</h1>
+        </div>
+        
+        <div class="script-card">
+            <div class="script-box">
+                <div class="script-code" id="scriptCode">
+                    loadstring(game:HttpGet("<span id="scriptUrl">https://zeffvortexscript.vercel.app/script.lua</span>"))()
+                </div>
+            </div>
+            
+            <button class="copy-btn" id="copyBtn">
+                📋 SALIN SCRIPT
+            </button>
+        </div>
+        
+        <div class="footer">
+            ━━━━━━━━━━━━━━━━━━━━━━━━<br>
+            🛸 <span class="zeff">ZEFF</span> 🛸<br>
+            ━━━━━━━━━━━━━━━━━━━━━━━━
+        </div>
+    </div>
+    
+    <div id="toast" class="toast">✅ Script disalin!</div>
+    
+    <script>
+        const copyBtn = document.getElementById('copyBtn');
+        const toast = document.getElementById('toast');
+        
+        function getFullScriptText() {
+            const scriptUrl = document.getElementById('scriptUrl').innerText;
+            return `loadstring(game:HttpGet("${scriptUrl}"))()`;
+        }
+        
+        copyBtn.addEventListener('click', async () => {
+            const textToCopy = getFullScriptText();
+            
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                showToast('✅ Script disalin!');
+                copyBtn.innerHTML = '✅ TERSALIN!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = '📋 SALIN SCRIPT';
+                }, 1500);
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = textToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('✅ Script disalin!');
+            }
+        });
+        
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+        
+        // Efek glitch random
+        setInterval(() => {
+            const vortex = document.querySelector('.vortex');
+            if (Math.random() > 0.95) {
+                vortex.style.animation = 'none';
+                setTimeout(() => {
+                    vortex.style.animation = 'gradientShift 3s ease infinite, textGlitch 2s infinite';
+                }, 50);
+            }
+        }, 3000);
+    </script>
 </body>
 </html>

@@ -1,20 +1,20 @@
 -- ============================================
--- ZEFF VORTEX - SIMPLE & POWERFUL
--- TOMBOL PEDANG = MULTI HIT (ON/OFF, BISA DIGESER)
--- MENU = MODAL LAMA (BISA DIGESER, DIPERKECIL)
--- FITUR: ESP (BOX, LINE, NAME) + MULTI HIT + SPEED/JUMP
+-- ZEFF VORTEX - FINAL
+-- TABS: ESP | MULTI HIT | BOOST
+-- MENU: Bisa digeser & diperkecil
+-- TOMBOL PEDANG: ON/OFF Multi Hit (bisa digeser)
 -- ============================================
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ============================================
--- VARIABEL ESP
+-- VARIABEL
 -- ============================================
+-- ESP
 local masterEsp = false
 local boxEsp = false
 local lineEsp = false
@@ -23,19 +23,15 @@ local espColor = Color3.fromRGB(155, 0, 255)
 local espThick = 2
 local espList = {}
 
--- ============================================
--- VARIABEL MULTI HIT (Tombol Pedang)
--- ============================================
+-- MULTI HIT
 local multiHit = false
 local mhRange = 20
 local mhDamage = 10
 local mhTargets = 10
-local mhHitsPerSec = 5
-local mhMode = "players" -- players / all
+local mhHits = 5
+local mhMode = "players"
 
--- ============================================
--- VARIABEL SPEED & JUMP
--- ============================================
+-- BOOST
 local speedBoost = false
 local speedMult = 1
 local jumpBoost = false
@@ -43,525 +39,581 @@ local jumpMult = 1
 local origSpeed = 16
 local origJump = 50
 
+-- UI
+local screenGui = nil
+local mainFrame = nil
+local contentFrame = nil
+local minimized = false
+local currentTab = "esp"
+
 -- ============================================
--- CREATE MENU (MODAL LAMA, BISA DIGESER & DIPERKECIL)
+-- CREATE MENU
 -- ============================================
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ZeffVortex"
-screenGui.ResetOnSpawn = false
-pcall(function()
-    screenGui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
-end)
-if not screenGui.Parent then
-    screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+local function CreateUI()
+    if screenGui then screenGui:Destroy() end
+    
+    local CoreGui = game:GetService("CoreGui")
+    screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ZeffVortex"
+    screenGui.ResetOnSpawn = false
+    
+    pcall(function()
+        screenGui.Parent = (gethui and gethui()) or CoreGui
+    end)
+    if not screenGui.Parent then
+        screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    end
+    
+    -- MAIN FRAME
+    mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 340, 0, 420)
+    mainFrame.Position = UDim2.new(0.5, -170, 0.5, -210)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
+    mainFrame.BackgroundTransparency = 0
+    mainFrame.BorderSizePixel = 0
+    mainFrame.ClipsDescendants = true
+    mainFrame.Parent = screenGui
+    
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 12)
+    mainCorner.Parent = mainFrame
+    
+    local mainBorder = Instance.new("UIStroke")
+    mainBorder.Thickness = 1
+    mainBorder.Color = Color3.fromRGB(155, 0, 255)
+    mainBorder.Transparency = 0.3
+    mainBorder.Parent = mainFrame
+    
+    -- HEADER (DRAG)
+    local header = Instance.new("Frame")
+    header.Size = UDim2.new(1, 0, 0, 45)
+    header.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
+    header.BackgroundTransparency = 0.2
+    header.BorderSizePixel = 0
+    header.Parent = mainFrame
+    
+    local headerCorner = Instance.new("UICorner")
+    headerCorner.CornerRadius = UDim.new(0, 12)
+    headerCorner.Parent = header
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(0.5, 0, 1, 0)
+    title.Position = UDim2.new(0.04, 0, 0, 0)
+    title.Text = "⚔️ ZEFF VORTEX"
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.BackgroundTransparency = 1
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 14
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = header
+    
+    -- MINIMIZE BUTTON
+    local minBtn = Instance.new("TextButton")
+    minBtn.Size = UDim2.new(0, 30, 0, 30)
+    minBtn.Position = UDim2.new(1, -70, 0.5, -15)
+    minBtn.Text = "─"
+    minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    minBtn.BackgroundTransparency = 1
+    minBtn.Font = Enum.Font.GothamBold
+    minBtn.TextSize = 18
+    minBtn.Parent = header
+    
+    -- CLOSE BUTTON
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 30, 0, 30)
+    closeBtn.Position = UDim2.new(1, -38, 0.5, -15)
+    closeBtn.Text = "✕"
+    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 16
+    closeBtn.Parent = header
+    
+    -- TAB BAR
+    local tabBar = Instance.new("Frame")
+    tabBar.Size = UDim2.new(1, -20, 0, 38)
+    tabBar.Position = UDim2.new(0, 10, 0, 52)
+    tabBar.BackgroundTransparency = 1
+    tabBar.Parent = mainFrame
+    
+    local espTab = Instance.new("TextButton")
+    espTab.Size = UDim2.new(0.3, -4, 1, 0)
+    espTab.Position = UDim2.new(0, 0, 0, 0)
+    espTab.Text = "🎮 ESP"
+    espTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+    espTab.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
+    espTab.Font = Enum.Font.GothamBold
+    espTab.TextSize = 12
+    espTab.Parent = tabBar
+    
+    local multiTab = Instance.new("TextButton")
+    multiTab.Size = UDim2.new(0.33, -4, 1, 0)
+    multiTab.Position = UDim2.new(0.32, 4, 0, 0)
+    multiTab.Text = "⚔️ MULTI HIT"
+    multiTab.TextColor3 = Color3.fromRGB(200, 200, 220)
+    multiTab.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    multiTab.Font = Enum.Font.GothamBold
+    multiTab.TextSize = 12
+    multiTab.Parent = tabBar
+    
+    local boostTab = Instance.new("TextButton")
+    boostTab.Size = UDim2.new(0.33, -4, 1, 0)
+    boostTab.Position = UDim2.new(0.64, 8, 0, 0)
+    boostTab.Text = "🏃 BOOST"
+    boostTab.TextColor3 = Color3.fromRGB(200, 200, 220)
+    boostTab.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    boostTab.Font = Enum.Font.GothamBold
+    boostTab.TextSize = 12
+    boostTab.Parent = tabBar
+    
+    -- CONTENT AREA
+    contentFrame = Instance.new("ScrollingFrame")
+    contentFrame.Size = UDim2.new(1, -20, 1, -140)
+    contentFrame.Position = UDim2.new(0, 10, 0, 98)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    contentFrame.ScrollBarThickness = 3
+    contentFrame.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
+    contentFrame.Parent = mainFrame
+    
+    -- ========== TAB 1: ESP ==========
+    local espContent = Instance.new("Frame")
+    espContent.Size = UDim2.new(1, 0, 1, 0)
+    espContent.BackgroundTransparency = 1
+    espContent.Visible = true
+    espContent.Parent = contentFrame
+    
+    local y = 5
+    local masterBtn, masterStatus = CreateToggle(espContent, "🔘 MASTER ESP", y, masterEsp)
+    y = y + 42
+    local boxBtn, boxStatus = CreateToggle(espContent, "📦 BOX ESP", y, boxEsp)
+    y = y + 42
+    local lineBtn, lineStatus = CreateToggle(espContent, "📏 LINE ESP", y, lineEsp)
+    y = y + 42
+    local nameBtn, nameStatus = CreateToggle(espContent, "🏷️ NAME ESP", y, nameEsp)
+    y = y + 42
+    local thickControl = CreateSlider(espContent, "📏 KETEBALAN", y, espThick, 1, 5)
+    y = y + 50
+    espContent.CanvasSize = UDim2.new(0, 0, 0, y + 10)
+    
+    -- ========== TAB 2: MULTI HIT ==========
+    local multiContent = Instance.new("Frame")
+    multiContent.Size = UDim2.new(1, 0, 1, 0)
+    multiContent.BackgroundTransparency = 1
+    multiContent.Visible = false
+    multiContent.Parent = contentFrame
+    
+    y = 5
+    local rangeControl = CreateSlider(multiContent, "📏 RADIUS (M)", y, mhRange, 5, 20)
+    y = y + 50
+    local damageControl = CreateSlider(multiContent, "💥 DAMAGE", y, mhDamage, 1, 25)
+    y = y + 50
+    local targetControl = CreateSlider(multiContent, "🎯 TARGET", y, mhTargets, 1, 20)
+    y = y + 50
+    local hitsControl = CreateSlider(multiContent, "⚡ HIT/DETIK", y, mhHits, 1, 10)
+    y = y + 50
+    
+    -- Mode Toggle
+    local modeFrame = Instance.new("Frame")
+    modeFrame.Size = UDim2.new(1, 0, 0, 40)
+    modeFrame.Position = UDim2.new(0, 0, 0, y)
+    modeFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+    modeFrame.BackgroundTransparency = 0
+    modeFrame.BorderSizePixel = 0
+    modeFrame.Parent = multiContent
+    local modeCorner = Instance.new("UICorner")
+    modeCorner.CornerRadius = UDim.new(0, 8)
+    modeCorner.Parent = modeFrame
+    
+    local modeLabel = Instance.new("TextLabel")
+    modeLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    modeLabel.Position = UDim2.new(0, 10, 0, 0)
+    modeLabel.Text = "🎯 TARGET MODE"
+    modeLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
+    modeLabel.BackgroundTransparency = 1
+    modeLabel.Font = Enum.Font.GothamBold
+    modeLabel.TextSize = 11
+    modeLabel.TextXAlignment = Enum.TextXAlignment.Left
+    modeLabel.Parent = modeFrame
+    
+    local modeBtn = Instance.new("TextButton")
+    modeBtn.Size = UDim2.new(0.4, 0, 0.7, 0)
+    modeBtn.Position = UDim2.new(0.55, 0, 0.15, 0)
+    modeBtn.Text = "👤 PLAYERS"
+    modeBtn.TextColor3 = Color3.fromRGB(155, 0, 255)
+    modeBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+    modeBtn.Font = Enum.Font.GothamBold
+    modeBtn.TextSize = 10
+    modeBtn.Parent = modeFrame
+    local modeBtnCorner = Instance.new("UICorner")
+    modeBtnCorner.CornerRadius = UDim.new(0, 6)
+    modeBtnCorner.Parent = modeBtn
+    y = y + 48
+    multiContent.CanvasSize = UDim2.new(0, 0, 0, y + 10)
+    
+    -- ========== TAB 3: BOOST ==========
+    local boostContent = Instance.new("Frame")
+    boostContent.Size = UDim2.new(1, 0, 1, 0)
+    boostContent.BackgroundTransparency = 1
+    boostContent.Visible = false
+    boostContent.Parent = contentFrame
+    
+    y = 5
+    local speedToggle, speedStatus = CreateToggle(boostContent, "⚡ SPEED BOOST", y, speedBoost)
+    y = y + 42
+    local speedControl = CreateSlider(boostContent, "🏃 SPEED (x)", y, speedMult, 1, 100)
+    y = y + 50
+    local jumpToggle, jumpStatus = CreateToggle(boostContent, "🦘 JUMP BOOST", y, jumpBoost)
+    y = y + 42
+    local jumpControl = CreateSlider(boostContent, "📈 JUMP (x)", y, jumpMult, 1, 100)
+    y = y + 50
+    boostContent.CanvasSize = UDim2.new(0, 0, 0, y + 10)
+    
+    -- ========== FUNGSI CREATE UI ==========
+    function CreateToggle(parent, text, yPos, state)
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, 0, 0, 36)
+        btn.Position = UDim2.new(0, 0, 0, yPos)
+        btn.Text = text
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.BackgroundColor3 = state and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 12
+        btn.TextXAlignment = Enum.TextXAlignment.Left
+        btn.Parent = parent
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = btn
+        
+        local pad = Instance.new("UIPadding")
+        pad.PaddingLeft = UDim.new(0, 12)
+        pad.Parent = btn
+        
+        local status = Instance.new("TextLabel")
+        status.Size = UDim2.new(0.35, 0, 1, 0)
+        status.Position = UDim2.new(0.65, 0, 0, 0)
+        status.Text = state and "✅ ON" or "❌ OFF"
+        status.TextColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        status.BackgroundTransparency = 1
+        status.Font = Enum.Font.GothamBold
+        status.TextSize = 11
+        status.TextXAlignment = Enum.TextXAlignment.Right
+        status.Parent = btn
+        
+        return btn, status
+    end
+    
+    function CreateSlider(parent, label, yPos, value, minVal, maxVal)
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(1, 0, 0, 44)
+        frame.Position = UDim2.new(0, 0, 0, yPos)
+        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+        frame.BackgroundTransparency = 0
+        frame.BorderSizePixel = 0
+        frame.Parent = parent
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = frame
+        
+        local labelText = Instance.new("TextLabel")
+        labelText.Size = UDim2.new(0.45, 0, 1, 0)
+        labelText.Position = UDim2.new(0, 10, 0, 0)
+        labelText.Text = label
+        labelText.TextColor3 = Color3.fromRGB(200, 200, 220)
+        labelText.BackgroundTransparency = 1
+        labelText.Font = Enum.Font.GothamBold
+        labelText.TextSize = 10
+        labelText.TextXAlignment = Enum.TextXAlignment.Left
+        labelText.Parent = frame
+        
+        local valueText = Instance.new("TextLabel")
+        valueText.Size = UDim2.new(0.2, 0, 1, 0)
+        valueText.Position = UDim2.new(0.5, 0, 0, 0)
+        valueText.Text = tostring(value)
+        valueText.TextColor3 = Color3.fromRGB(155, 0, 255)
+        valueText.BackgroundTransparency = 1
+        valueText.Font = Enum.Font.GothamBold
+        valueText.TextSize = 11
+        valueText.TextXAlignment = Enum.TextXAlignment.Center
+        valueText.Parent = frame
+        
+        local minus = Instance.new("TextButton")
+        minus.Size = UDim2.new(0, 28, 0, 28)
+        minus.Position = UDim2.new(1, -65, 0.5, -14)
+        minus.Text = "-"
+        minus.TextColor3 = Color3.fromRGB(255, 255, 255)
+        minus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
+        minus.Font = Enum.Font.GothamBold
+        minus.TextSize = 16
+        minus.Parent = frame
+        
+        local plus = Instance.new("TextButton")
+        plus.Size = UDim2.new(0, 28, 0, 28)
+        plus.Position = UDim2.new(1, -33, 0.5, -14)
+        plus.Text = "+"
+        plus.TextColor3 = Color3.fromRGB(255, 255, 255)
+        plus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
+        plus.Font = Enum.Font.GothamBold
+        plus.TextSize = 16
+        plus.Parent = frame
+        
+        local btnCorner1 = Instance.new("UICorner")
+        btnCorner1.CornerRadius = UDim.new(0, 6)
+        btnCorner1.Parent = minus
+        
+        local btnCorner2 = Instance.new("UICorner")
+        btnCorner2.CornerRadius = UDim.new(0, 6)
+        btnCorner2.Parent = plus
+        
+        return {frame = frame, valueText = valueText, minus = minus, plus = plus}
+    end
+    
+    -- ========== TAB SWITCH ==========
+    local function SwitchTab(tab)
+        currentTab = tab
+        espTab.BackgroundColor3 = tab == "esp" and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
+        espTab.TextColor3 = tab == "esp" and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 220)
+        multiTab.BackgroundColor3 = tab == "multi" and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
+        multiTab.TextColor3 = tab == "multi" and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 220)
+        boostTab.BackgroundColor3 = tab == "boost" and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
+        boostTab.TextColor3 = tab == "boost" and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 220)
+        
+        espContent.Visible = (tab == "esp")
+        multiContent.Visible = (tab == "multi")
+        boostContent.Visible = (tab == "boost")
+    end
+    
+    espTab.MouseButton1Click:Connect(function() SwitchTab("esp") end)
+    multiTab.MouseButton1Click:Connect(function() SwitchTab("multi") end)
+    boostTab.MouseButton1Click:Connect(function() SwitchTab("boost") end)
+    
+    -- ========== BUTTON ACTIONS ==========
+    masterBtn.MouseButton1Click:Connect(function()
+        masterEsp = not masterEsp
+        masterStatus.Text = masterEsp and "✅ ON" or "❌ OFF"
+        masterStatus.TextColor3 = masterEsp and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        masterBtn.BackgroundColor3 = masterEsp and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
+    end)
+    
+    boxBtn.MouseButton1Click:Connect(function()
+        boxEsp = not boxEsp
+        boxStatus.Text = boxEsp and "✅ ON" or "❌ OFF"
+        boxStatus.TextColor3 = boxEsp and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        boxBtn.BackgroundColor3 = boxEsp and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+    end)
+    
+    lineBtn.MouseButton1Click:Connect(function()
+        lineEsp = not lineEsp
+        lineStatus.Text = lineEsp and "✅ ON" or "❌ OFF"
+        lineStatus.TextColor3 = lineEsp and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        lineBtn.BackgroundColor3 = lineEsp and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+    end)
+    
+    nameBtn.MouseButton1Click:Connect(function()
+        nameEsp = not nameEsp
+        nameStatus.Text = nameEsp and "✅ ON" or "❌ OFF"
+        nameStatus.TextColor3 = nameEsp and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        nameBtn.BackgroundColor3 = nameEsp and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+    end)
+    
+    thickControl.minus.MouseButton1Click:Connect(function()
+        espThick = math.max(1, espThick - 1)
+        thickControl.valueText.Text = tostring(espThick)
+        RefreshESP()
+    end)
+    thickControl.plus.MouseButton1Click:Connect(function()
+        espThick = math.min(5, espThick + 1)
+        thickControl.valueText.Text = tostring(espThick)
+        RefreshESP()
+    end)
+    
+    rangeControl.minus.MouseButton1Click:Connect(function()
+        mhRange = math.max(5, mhRange - 1)
+        rangeControl.valueText.Text = tostring(mhRange)
+    end)
+    rangeControl.plus.MouseButton1Click:Connect(function()
+        mhRange = math.min(20, mhRange + 1)
+        rangeControl.valueText.Text = tostring(mhRange)
+    end)
+    
+    damageControl.minus.MouseButton1Click:Connect(function()
+        mhDamage = math.max(1, mhDamage - 1)
+        damageControl.valueText.Text = tostring(mhDamage)
+    end)
+    damageControl.plus.MouseButton1Click:Connect(function()
+        mhDamage = math.min(25, mhDamage + 1)
+        damageControl.valueText.Text = tostring(mhDamage)
+    end)
+    
+    targetControl.minus.MouseButton1Click:Connect(function()
+        mhTargets = math.max(1, mhTargets - 1)
+        targetControl.valueText.Text = tostring(mhTargets)
+    end)
+    targetControl.plus.MouseButton1Click:Connect(function()
+        mhTargets = math.min(20, mhTargets + 1)
+        targetControl.valueText.Text = tostring(mhTargets)
+    end)
+    
+    hitsControl.minus.MouseButton1Click:Connect(function()
+        mhHits = math.max(1, mhHits - 1)
+        hitsControl.valueText.Text = tostring(mhHits)
+    end)
+    hitsControl.plus.MouseButton1Click:Connect(function()
+        mhHits = math.min(10, mhHits + 1)
+        hitsControl.valueText.Text = tostring(mhHits)
+    end)
+    
+    modeBtn.MouseButton1Click:Connect(function()
+        mhMode = (mhMode == "players") and "all" or "players"
+        modeBtn.Text = (mhMode == "players") and "👤 PLAYERS" or "👾 ALL ENTITY"
+    end)
+    
+    speedToggle.MouseButton1Click:Connect(function()
+        speedBoost = not speedBoost
+        speedStatus.Text = speedBoost and "✅ ON" or "❌ OFF"
+        speedStatus.TextColor3 = speedBoost and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        speedToggle.BackgroundColor3 = speedBoost and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+        ApplySpeed()
+    end)
+    
+    speedControl.minus.MouseButton1Click:Connect(function()
+        speedMult = math.max(1, speedMult - 1)
+        speedControl.valueText.Text = speedMult .. "x"
+        ApplySpeed()
+    end)
+    speedControl.plus.MouseButton1Click:Connect(function()
+        speedMult = math.min(100, speedMult + 1)
+        speedControl.valueText.Text = speedMult .. "x"
+        ApplySpeed()
+    end)
+    
+    jumpToggle.MouseButton1Click:Connect(function()
+        jumpBoost = not jumpBoost
+        jumpStatus.Text = jumpBoost and "✅ ON" or "❌ OFF"
+        jumpStatus.TextColor3 = jumpBoost and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        jumpToggle.BackgroundColor3 = jumpBoost and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+        ApplyJump()
+    end)
+    
+    jumpControl.minus.MouseButton1Click:Connect(function()
+        jumpMult = math.max(1, jumpMult - 1)
+        jumpControl.valueText.Text = jumpMult .. "x"
+        ApplyJump()
+    end)
+    jumpControl.plus.MouseButton1Click:Connect(function()
+        jumpMult = math.min(100, jumpMult + 1)
+        jumpControl.valueText.Text = jumpMult .. "x"
+        ApplyJump()
+    end)
+    
+    -- ========== DRAG MENU ==========
+    local dragStart, startPos, isDragging = nil, nil, false
+    header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then isDragging = false end
+            end)
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if not isDragging then return end
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    -- ========== MINIMIZE ==========
+    minBtn.MouseButton1Click:Connect(function()
+        if minimized then
+            mainFrame:TweenSize(UDim2.new(0, 340, 0, 420), "Out", "Quad", 0.2, true)
+            tabBar.Visible = true
+            contentFrame.Visible = true
+            minBtn.Text = "─"
+            minimized = false
+        else
+            mainFrame:TweenSize(UDim2.new(0, 200, 0, 45), "Out", "Quad", 0.2, true)
+            tabBar.Visible = false
+            contentFrame.Visible = false
+            minBtn.Text = "□"
+            minimized = true
+        end
+    end)
+    
+    closeBtn.MouseButton1Click:Connect(function()
+        screenGui:Destroy()
+    end)
 end
 
--- FRAME UTAMA (BISA DI-GESER & DI-PERKECIL)
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 300, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
-mainFrame.BackgroundTransparency = 0
-mainFrame.BorderSizePixel = 0
-mainFrame.ClipsDescendants = true
-mainFrame.Parent = screenGui
-
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 12)
-mainCorner.Parent = mainFrame
-
-local mainBorder = Instance.new("UIStroke")
-mainBorder.Thickness = 1
-mainBorder.Color = Color3.fromRGB(155, 0, 255)
-mainBorder.Transparency = 0.3
-mainBorder.Parent = mainFrame
-
--- HEADER (BUAT DRAG)
-local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 40)
-header.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
-header.BackgroundTransparency = 0.2
-header.BorderSizePixel = 0
-header.Parent = mainFrame
-
-local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 12)
-headerCorner.Parent = header
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0.6, 0, 1, 0)
-title.Position = UDim2.new(0.04, 0, 0, 0)
-title.Text = "⚔️ ZEFF VORTEX"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.BackgroundTransparency = 1
-title.Font = Enum.Font.GothamBold
-title.TextSize = 14
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = header
-
--- TOMBOL MINIMIZE (PERKECIL)
-local minBtn = Instance.new("TextButton")
-minBtn.Size = UDim2.new(0, 30, 0, 30)
-minBtn.Position = UDim2.new(1, -70, 0.5, -15)
-minBtn.Text = "─"
-minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-minBtn.BackgroundTransparency = 1
-minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 18
-minBtn.Parent = header
-
--- TOMBOL CLOSE
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -38, 0.5, -15)
-closeBtn.Text = "✕"
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.BackgroundTransparency = 1
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 16
-closeBtn.Parent = header
-
--- CONTENT AREA
-local content = Instance.new("ScrollingFrame")
-content.Size = UDim2.new(1, -16, 1, -55)
-content.Position = UDim2.new(0, 8, 0, 48)
-content.BackgroundTransparency = 1
-content.CanvasSize = UDim2.new(0, 0, 0, 0)
-content.ScrollBarThickness = 3
-content.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
-content.Parent = mainFrame
-
-local y = 5
-
--- ========== ESP SECTION ==========
-local espLabel = Instance.new("TextLabel")
-espLabel.Size = UDim2.new(1, 0, 0, 25)
-espLabel.Position = UDim2.new(0, 0, 0, y)
-espLabel.Text = "🎮 ESP SETTINGS"
-espLabel.TextColor3 = Color3.fromRGB(155, 0, 255)
-espLabel.BackgroundTransparency = 1
-espLabel.Font = Enum.Font.GothamBold
-espLabel.TextSize = 12
-espLabel.Parent = content
-y = y + 30
-
-local masterBtn, masterStatus = createToggle(content, "🔘 MASTER ESP", y, masterEsp)
-y = y + 40
-local boxBtn, boxStatus = createToggle(content, "📦 BOX ESP", y, boxEsp)
-y = y + 40
-local lineBtn, lineStatus = createToggle(content, "📏 LINE ESP", y, lineEsp)
-y = y + 40
-local nameBtn, nameStatus = createToggle(content, "🏷️ NAME ESP", y, nameEsp)
-y = y + 40
-local thickControl = createSlider(content, "📏 KETEBALAN", y, espThick, 1, 5)
-y = y + 50
-
--- ========== MULTI HIT SECTION ==========
-local mhLabel = Instance.new("TextLabel")
-mhLabel.Size = UDim2.new(1, 0, 0, 25)
-mhLabel.Position = UDim2.new(0, 0, 0, y)
-mhLabel.Text = "⚔️ MULTI HIT SETTINGS"
-mhLabel.TextColor3 = Color3.fromRGB(155, 0, 255)
-mhLabel.BackgroundTransparency = 1
-mhLabel.Font = Enum.Font.GothamBold
-mhLabel.TextSize = 12
-mhLabel.Parent = content
-y = y + 30
-
-local rangeControl = createSlider(content, "📏 RADIUS (M)", y, mhRange, 5, 20)
-y = y + 50
-local damageControl = createSlider(content, "💥 DAMAGE", y, mhDamage, 1, 25)
-y = y + 50
-local targetControl = createSlider(content, "🎯 TARGET", y, mhTargets, 1, 20)
-y = y + 50
-local hitsControl = createSlider(content, "⚡ HIT/DETIK", y, mhHitsPerSec, 1, 10)
-y = y + 50
-
--- Target Mode Toggle
-local modeFrame = Instance.new("Frame")
-modeFrame.Size = UDim2.new(1, 0, 0, 35)
-modeFrame.Position = UDim2.new(0, 0, 0, y)
-modeFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-modeFrame.BackgroundTransparency = 0
-modeFrame.BorderSizePixel = 0
-modeFrame.Parent = content
-local modeCorner = Instance.new("UICorner")
-modeCorner.CornerRadius = UDim.new(0, 8)
-modeCorner.Parent = modeFrame
-
-local modeText = Instance.new("TextLabel")
-modeText.Size = UDim2.new(0.5, 0, 1, 0)
-modeText.Position = UDim2.new(0, 10, 0, 0)
-modeText.Text = "🎯 TARGET MODE"
-modeText.TextColor3 = Color3.fromRGB(200, 200, 220)
-modeText.BackgroundTransparency = 1
-modeText.Font = Enum.Font.GothamBold
-modeText.TextSize = 11
-modeText.TextXAlignment = Enum.TextXAlignment.Left
-modeText.Parent = modeFrame
-
-local modeBtn = Instance.new("TextButton")
-modeBtn.Size = UDim2.new(0.4, 0, 0.7, 0)
-modeBtn.Position = UDim2.new(0.55, 0, 0.15, 0)
-modeBtn.Text = "👤 PLAYERS"
-modeBtn.TextColor3 = Color3.fromRGB(155, 0, 255)
-modeBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
-modeBtn.Font = Enum.Font.GothamBold
-modeBtn.TextSize = 10
-modeBtn.Parent = modeFrame
-local modeCorner2 = Instance.new("UICorner")
-modeCorner2.CornerRadius = UDim.new(0, 6)
-modeCorner2.Parent = modeBtn
-y = y + 45
-
--- ========== BOOST SECTION ==========
-local boostLabel = Instance.new("TextLabel")
-boostLabel.Size = UDim2.new(1, 0, 0, 25)
-boostLabel.Position = UDim2.new(0, 0, 0, y)
-boostLabel.Text = "🏃 BOOST SETTINGS"
-boostLabel.TextColor3 = Color3.fromRGB(155, 0, 255)
-boostLabel.BackgroundTransparency = 1
-boostLabel.Font = Enum.Font.GothamBold
-boostLabel.TextSize = 12
-boostLabel.Parent = content
-y = y + 30
-
-local speedBtn, speedStatus = createToggle(content, "⚡ SPEED BOOST", y, speedBoost)
-y = y + 40
-local speedControl = createSlider(content, "🏃 SPEED (x)", y, speedMult, 1, 100)
-y = y + 50
-local jumpBtn, jumpStatus = createToggle(content, "🦘 JUMP BOOST", y, jumpBoost)
-y = y + 40
-local jumpControl = createSlider(content, "📈 JUMP (x)", y, jumpMult, 1, 100)
-y = y + 50
-
-content.CanvasSize = UDim2.new(0, 0, 0, y + 20)
-
--- ========== FUNGSI CREATE UI ==========
-function createToggle(parent, text, yPos, state)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 35)
-    btn.Position = UDim2.new(0, 0, 0, yPos)
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.BackgroundColor3 = state and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 12
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.Parent = parent
-    
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 6)
-    btnCorner.Parent = btn
-    
-    local pad = Instance.new("UIPadding")
-    pad.PaddingLeft = UDim.new(0, 12)
-    pad.Parent = btn
-    
-    local status = Instance.new("TextLabel")
-    status.Size = UDim2.new(0.35, 0, 1, 0)
-    status.Position = UDim2.new(0.65, 0, 0, 0)
-    status.Text = state and "✅ ON" or "❌ OFF"
-    status.TextColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    status.BackgroundTransparency = 1
-    status.Font = Enum.Font.GothamBold
-    status.TextSize = 11
-    status.TextXAlignment = Enum.TextXAlignment.Right
-    status.Parent = btn
-    
-    return btn, status
-end
-
-function createSlider(parent, label, yPos, value, minVal, maxVal)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 40)
-    frame.Position = UDim2.new(0, 0, 0, yPos)
-    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-    frame.BackgroundTransparency = 0
-    frame.BorderSizePixel = 0
-    frame.Parent = parent
+-- ============================================
+-- TOMBOL PEDANG (BISA DIGESER)
+-- ============================================
+local function CreateSwordButton()
+    local swordBtn = Instance.new("TextButton")
+    swordBtn.Size = UDim2.new(0, 50, 0, 50)
+    swordBtn.Position = UDim2.new(1, -65, 1, -180)
+    swordBtn.Text = "⚔️"
+    swordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    swordBtn.TextSize = 26
+    swordBtn.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
+    swordBtn.BackgroundTransparency = 0.2
+    swordBtn.BorderSizePixel = 0
+    swordBtn.Parent = screenGui
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = frame
+    corner.CornerRadius = UDim.new(0, 25)
+    corner.Parent = swordBtn
     
-    local labelText = Instance.new("TextLabel")
-    labelText.Size = UDim2.new(0.45, 0, 1, 0)
-    labelText.Position = UDim2.new(0, 10, 0, 0)
-    labelText.Text = label
-    labelText.TextColor3 = Color3.fromRGB(200, 200, 220)
-    labelText.BackgroundTransparency = 1
-    labelText.Font = Enum.Font.GothamBold
-    labelText.TextSize = 10
-    labelText.TextXAlignment = Enum.TextXAlignment.Left
-    labelText.Parent = frame
+    local led = Instance.new("Frame")
+    led.Size = UDim2.new(0, 10, 0, 10)
+    led.Position = UDim2.new(1, -12, 1, -12)
+    led.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    led.BorderSizePixel = 0
+    led.Parent = swordBtn
+    local ledCorner = Instance.new("UICorner")
+    ledCorner.CornerRadius = UDim.new(1, 0)
+    ledCorner.Parent = led
     
-    local valueText = Instance.new("TextLabel")
-    valueText.Size = UDim2.new(0.2, 0, 1, 0)
-    valueText.Position = UDim2.new(0.5, 0, 0, 0)
-    valueText.Text = tostring(value)
-    valueText.TextColor3 = Color3.fromRGB(155, 0, 255)
-    valueText.BackgroundTransparency = 1
-    valueText.Font = Enum.Font.GothamBold
-    valueText.TextSize = 11
-    valueText.TextXAlignment = Enum.TextXAlignment.Center
-    valueText.Parent = frame
+    -- DRAG
+    local dragStart, startPos, isDragging = nil, nil, false
+    swordBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+            dragStart = input.Position
+            startPos = swordBtn.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then isDragging = false end
+            end)
+        end
+    end)
     
-    local minus = Instance.new("TextButton")
-    minus.Size = UDim2.new(0, 28, 0, 28)
-    minus.Position = UDim2.new(1, -65, 0.5, -14)
-    minus.Text = "-"
-    minus.TextColor3 = Color3.fromRGB(255, 255, 255)
-    minus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
-    minus.Font = Enum.Font.GothamBold
-    minus.TextSize = 16
-    minus.Parent = frame
+    UserInputService.InputChanged:Connect(function(input)
+        if not isDragging then return end
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            local newX = math.clamp(startPos.X.Offset + delta.X, 0, UDim2.new(1, -55, 0, 0).X.Offset)
+            local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, UDim2.new(0, 0, 1, -55).Y.Offset)
+            swordBtn.Position = UDim2.new(startPos.X.Scale, newX, startPos.Y.Scale, newY)
+        end
+    end)
     
-    local plus = Instance.new("TextButton")
-    plus.Size = UDim2.new(0, 28, 0, 28)
-    plus.Position = UDim2.new(1, -33, 0.5, -14)
-    plus.Text = "+"
-    plus.TextColor3 = Color3.fromRGB(255, 255, 255)
-    plus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
-    plus.Font = Enum.Font.GothamBold
-    plus.TextSize = 16
-    plus.Parent = frame
-    
-    local btnCorner1 = Instance.new("UICorner")
-    btnCorner1.CornerRadius = UDim.new(0, 6)
-    btnCorner1.Parent = minus
-    
-    local btnCorner2 = Instance.new("UICorner")
-    btnCorner2.CornerRadius = UDim.new(0, 6)
-    btnCorner2.Parent = plus
-    
-    return {frame = frame, valueText = valueText, minus = minus, plus = plus, min = minVal, max = maxVal}
+    -- KLIK = ON/OFF MULTI HIT
+    swordBtn.MouseButton1Click:Connect(function()
+        multiHit = not multiHit
+        led.BackgroundColor3 = multiHit and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    end)
 end
-
--- ========== TOMBOL PEDANG (MULTI HIT, BISA DIGESER) ==========
-local swordBtn = Instance.new("TextButton")
-swordBtn.Size = UDim2.new(0, 50, 0, 50)
-swordBtn.Position = UDim2.new(1, -65, 1, -180)
-swordBtn.Text = "⚔️"
-swordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-swordBtn.TextSize = 26
-swordBtn.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
-swordBtn.BackgroundTransparency = 0.2
-swordBtn.BorderSizePixel = 0
-swordBtn.Parent = screenGui
-
-local swordCorner = Instance.new("UICorner")
-swordCorner.CornerRadius = UDim.new(0, 25)
-swordCorner.Parent = swordBtn
-
-local led = Instance.new("Frame")
-led.Size = UDim2.new(0, 10, 0, 10)
-led.Position = UDim2.new(1, -12, 1, -12)
-led.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-led.BorderSizePixel = 0
-led.Parent = swordBtn
-local ledCorner = Instance.new("UICorner")
-ledCorner.CornerRadius = UDim.new(1, 0)
-ledCorner.Parent = led
-
--- DRAG TOMBOL PEDANG
-local dragStart, startPos, isDragging = nil, nil, false
-swordBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDragging = true
-        dragStart = input.Position
-        startPos = swordBtn.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then isDragging = false end
-        end)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if not isDragging then return end
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        local newX = math.clamp(startPos.X.Offset + delta.X, 0, UDim2.new(1, -55, 0, 0).X.Offset)
-        local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, UDim2.new(0, 0, 1, -55).Y.Offset)
-        swordBtn.Position = UDim2.new(startPos.X.Scale, newX, startPos.Y.Scale, newY)
-    end
-end)
-
--- ON/OFF MULTI HIT (KLIK PEDANG)
-swordBtn.MouseButton1Click:Connect(function()
-    multiHit = not multiHit
-    led.BackgroundColor3 = multiHit and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-end)
-
--- ========== BUTTON ACTIONS ==========
-masterBtn.MouseButton1Click:Connect(function()
-    masterEsp = not masterEsp
-    masterStatus.Text = masterEsp and "✅ ON" or "❌ OFF"
-    masterStatus.TextColor3 = masterEsp and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    masterBtn.BackgroundColor3 = masterEsp and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
-end)
-
-boxBtn.MouseButton1Click:Connect(function()
-    boxEsp = not boxEsp
-    boxStatus.Text = boxEsp and "✅ ON" or "❌ OFF"
-    boxStatus.TextColor3 = boxEsp and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    boxBtn.BackgroundColor3 = boxEsp and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
-end)
-
-lineBtn.MouseButton1Click:Connect(function()
-    lineEsp = not lineEsp
-    lineStatus.Text = lineEsp and "✅ ON" or "❌ OFF"
-    lineStatus.TextColor3 = lineEsp and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    lineBtn.BackgroundColor3 = lineEsp and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
-end)
-
-nameBtn.MouseButton1Click:Connect(function()
-    nameEsp = not nameEsp
-    nameStatus.Text = nameEsp and "✅ ON" or "❌ OFF"
-    nameStatus.TextColor3 = nameEsp and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    nameBtn.BackgroundColor3 = nameEsp and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
-end)
-
-thickControl.minus.MouseButton1Click:Connect(function()
-    espThick = math.max(1, espThick - 1)
-    thickControl.valueText.Text = tostring(espThick)
-    refreshESP()
-end)
-thickControl.plus.MouseButton1Click:Connect(function()
-    espThick = math.min(5, espThick + 1)
-    thickControl.valueText.Text = tostring(espThick)
-    refreshESP()
-end)
-
-rangeControl.minus.MouseButton1Click:Connect(function()
-    mhRange = math.max(5, mhRange - 1)
-    rangeControl.valueText.Text = tostring(mhRange)
-end)
-rangeControl.plus.MouseButton1Click:Connect(function()
-    mhRange = math.min(20, mhRange + 1)
-    rangeControl.valueText.Text = tostring(mhRange)
-end)
-
-damageControl.minus.MouseButton1Click:Connect(function()
-    mhDamage = math.max(1, mhDamage - 1)
-    damageControl.valueText.Text = tostring(mhDamage)
-end)
-damageControl.plus.MouseButton1Click:Connect(function()
-    mhDamage = math.min(25, mhDamage + 1)
-    damageControl.valueText.Text = tostring(mhDamage)
-end)
-
-targetControl.minus.MouseButton1Click:Connect(function()
-    mhTargets = math.max(1, mhTargets - 1)
-    targetControl.valueText.Text = tostring(mhTargets)
-end)
-targetControl.plus.MouseButton1Click:Connect(function()
-    mhTargets = math.min(20, mhTargets + 1)
-    targetControl.valueText.Text = tostring(mhTargets)
-end)
-
-hitsControl.minus.MouseButton1Click:Connect(function()
-    mhHitsPerSec = math.max(1, mhHitsPerSec - 1)
-    hitsControl.valueText.Text = tostring(mhHitsPerSec)
-end)
-hitsControl.plus.MouseButton1Click:Connect(function()
-    mhHitsPerSec = math.min(10, mhHitsPerSec + 1)
-    hitsControl.valueText.Text = tostring(mhHitsPerSec)
-end)
-
-modeBtn.MouseButton1Click:Connect(function()
-    if mhMode == "players" then
-        mhMode = "all"
-        modeBtn.Text = "👾 ALL ENTITY"
-    else
-        mhMode = "players"
-        modeBtn.Text = "👤 PLAYERS"
-    end
-end)
-
-speedBtn.MouseButton1Click:Connect(function()
-    speedBoost = not speedBoost
-    speedStatus.Text = speedBoost and "✅ ON" or "❌ OFF"
-    speedStatus.TextColor3 = speedBoost and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    speedBtn.BackgroundColor3 = speedBoost and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
-    applySpeed()
-end)
-
-speedControl.minus.MouseButton1Click:Connect(function()
-    speedMult = math.max(1, speedMult - 1)
-    speedControl.valueText.Text = speedMult .. "x"
-    applySpeed()
-end)
-speedControl.plus.MouseButton1Click:Connect(function()
-    speedMult = math.min(100, speedMult + 1)
-    speedControl.valueText.Text = speedMult .. "x"
-    applySpeed()
-end)
-
-jumpBtn.MouseButton1Click:Connect(function()
-    jumpBoost = not jumpBoost
-    jumpStatus.Text = jumpBoost and "✅ ON" or "❌ OFF"
-    jumpStatus.TextColor3 = jumpBoost and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-    jumpBtn.BackgroundColor3 = jumpBoost and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
-    applyJump()
-end)
-
-jumpControl.minus.MouseButton1Click:Connect(function()
-    jumpMult = math.max(1, jumpMult - 1)
-    jumpControl.valueText.Text = jumpMult .. "x"
-    applyJump()
-end)
-jumpControl.plus.MouseButton1Click:Connect(function()
-    jumpMult = math.min(100, jumpMult + 1)
-    jumpControl.valueText.Text = jumpMult .. "x"
-    applyJump()
-end)
-
--- ========== DRAG MENU ==========
-local menuDragStart, menuStartPos, isMenuDragging = nil, nil, false
-header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isMenuDragging = true
-        menuDragStart = input.Position
-        menuStartPos = mainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then isMenuDragging = false end
-        end)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if not isMenuDragging then return end
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - menuDragStart
-        mainFrame.Position = UDim2.new(menuStartPos.X.Scale, menuStartPos.X.Offset + delta.X, menuStartPos.Y.Scale, menuStartPos.Y.Offset + delta.Y)
-    end
-end)
-
--- ========== MINIMIZE (PERKECIL MENU) ==========
-local minimized = false
-minBtn.MouseButton1Click:Connect(function()
-    if minimized then
-        mainFrame:TweenSize(UDim2.new(0, 300, 0, 400), "Out", "Quad", 0.2, true)
-        content.Visible = true
-        minBtn.Text = "─"
-        minimized = false
-    else
-        mainFrame:TweenSize(UDim2.new(0, 200, 0, 40), "Out", "Quad", 0.2, true)
-        content.Visible = false
-        minBtn.Text = "□"
-        minimized = true
-    end
-end)
-
-closeBtn.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
-end)
 
 -- ============================================
 -- ESP FUNCTIONS
 -- ============================================
-local function createESP(player)
+local function CreateESP(player)
     if player == LocalPlayer or espList[player] then return end
     local esp = {}
     local box = Drawing.new("Square")
@@ -589,7 +641,7 @@ local function createESP(player)
     espList[player] = esp
 end
 
-local function removeESP(player)
+local function RemoveESP(player)
     local esp = espList[player]
     if esp then
         if esp.box then esp.box:Remove() end
@@ -599,23 +651,15 @@ local function removeESP(player)
     end
 end
 
-local function refreshESP()
+local function RefreshESP()
     for _, esp in pairs(espList) do
-        if esp.box then
-            esp.box.Color = espColor
-            esp.box.Thickness = espThick
-        end
-        if esp.line then
-            esp.line.Color = espColor
-            esp.line.Thickness = espThick
-        end
-        if esp.nameTag then
-            esp.nameTag.Color = espColor
-        end
+        if esp.box then esp.box.Color = espColor; esp.box.Thickness = espThick end
+        if esp.line then esp.line.Color = espColor; esp.line.Thickness = espThick end
+        if esp.nameTag then esp.nameTag.Color = espColor end
     end
 end
 
-local function updateESP()
+local function UpdateESP()
     if not masterEsp then
         for _, esp in pairs(espList) do
             if esp.box then esp.box.Visible = false end
@@ -667,14 +711,14 @@ end
 -- ============================================
 -- SPEED & JUMP
 -- ============================================
-local function applySpeed()
+local function ApplySpeed()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("Humanoid") then
         char.Humanoid.WalkSpeed = speedBoost and (origSpeed * speedMult) or origSpeed
     end
 end
 
-local function applyJump()
+local function ApplyJump()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("Humanoid") then
         char.Humanoid.JumpPower = jumpBoost and (origJump * jumpMult) or origJump
@@ -684,7 +728,7 @@ end
 -- ============================================
 -- MULTI HIT
 -- ============================================
-local function getTargets()
+local function GetTargets()
     local targets = {}
     local char = LocalPlayer.Character
     if not char then return targets end
@@ -698,9 +742,7 @@ local function getTargets()
                     local r = c:FindFirstChild("HumanoidRootPart")
                     if r and (root.Position - r.Position).Magnitude <= mhRange then
                         local h = c:FindFirstChild("Humanoid")
-                        if h and h.Health > 0 then
-                            table.insert(targets, h)
-                        end
+                        if h and h.Health > 0 then table.insert(targets, h) end
                     end
                 end
             end
@@ -726,9 +768,7 @@ local function getTargets()
                     local r = c:FindFirstChild("HumanoidRootPart")
                     if r and (root.Position - r.Position).Magnitude <= mhRange then
                         local h = c:FindFirstChild("Humanoid")
-                        if h and h.Health > 0 then
-                            table.insert(targets, h)
-                        end
+                        if h and h.Health > 0 then table.insert(targets, h) end
                     end
                 end
             end
@@ -742,31 +782,33 @@ local function getTargets()
     return targets
 end
 
-local function doMultiHit()
+local function DoMultiHit()
     if not multiHit then return end
-    local targets = getTargets()
-    for _, h in ipairs(targets) do
+    for _, h in ipairs(GetTargets()) do
         h.Health = h.Health - mhDamage
     end
 end
 
 -- ============================================
--- INIT
+-- INITIALIZE
 -- ============================================
+CreateUI()
+CreateSwordButton()
+
 for _, p in pairs(Players:GetPlayers()) do
-    if p ~= LocalPlayer then createESP(p) end
+    if p ~= LocalPlayer then CreateESP(p) end
 end
-Players.PlayerAdded:Connect(function(p) if p ~= LocalPlayer then createESP(p) end end)
-Players.PlayerRemoving:Connect(removeESP)
-RunService.RenderStepped:Connect(updateESP)
+Players.PlayerAdded:Connect(function(p) if p ~= LocalPlayer then CreateESP(p) end end)
+Players.PlayerRemoving:Connect(RemoveESP)
+RunService.RenderStepped:Connect(UpdateESP)
 
 LocalPlayer.CharacterAdded:Connect(function(char)
     char:WaitForChild("Humanoid")
     wait(0.5)
     origSpeed = char.Humanoid.WalkSpeed
     origJump = char.Humanoid.JumpPower
-    applySpeed()
-    applyJump()
+    ApplySpeed()
+    ApplyJump()
 end)
 
 local lastHit = 0
@@ -774,8 +816,8 @@ coroutine.wrap(function()
     while true do
         if multiHit then
             local now = tick()
-            if now - lastHit >= (1 / mhHitsPerSec) then
-                doMultiHit()
+            if now - lastHit >= (1 / mhHits) then
+                DoMultiHit()
                 lastHit = now
             end
         end
@@ -785,6 +827,7 @@ end)()
 
 print("==========================================")
 print("ZEFF VORTEX - READY")
+print("MENU: 3 TABS (ESP | MULTI HIT | BOOST)")
 print("MENU: Bisa digeser & diperkecil")
 print("TOMBOL PEDANG: ON/OFF Multi Hit (bisa digeser)")
 print("==========================================")

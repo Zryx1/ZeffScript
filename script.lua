@@ -1,14 +1,15 @@
 -- ============================================
--- ZEFF VORTEX - SCRIPT
--- BOX ESP + TRACER ESP + KETEBALAN
--- TANPA PASSWORD, LANGSUNG MUNCUL MENU
+-- ZEFF VORTEX - FINAL SCRIPT
+-- 3 ESP: BOX, TRACER, NAME (Bisa Barengan)
+-- MENU KECIL, PERKECIL JADI BAR
 -- ============================================
 
 -- ============================================
 -- VARIABEL ESP
 -- ============================================
-local espEnabled = false
-local espMode = "box"  -- "box" or "tracer"
+local espBoxEnabled = false
+local espTracerEnabled = false
+local espNameEnabled = false
 local espColor = Color3.fromRGB(155, 0, 255)  -- UNGU NEON
 local espThickness = 2
 
@@ -20,7 +21,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ============================================
--- BOX ESP
+-- CREATE BOX ESP
 -- ============================================
 local function CreateBoxESP(player)
     if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
@@ -34,24 +35,15 @@ local function CreateBoxESP(player)
     box.Filled = false
     box.Transparency = 0.5
     
-    local nameTag = Drawing.new("Text")
-    nameTag.Visible = false
-    nameTag.Color = espColor
-    nameTag.Size = 14
-    nameTag.Center = true
-    nameTag.Outline = true
-    nameTag.OutlineColor = Color3.fromRGB(0, 0, 0)
-    
     return {
         box = box,
-        nameTag = nameTag,
         player = player,
         type = "box"
     }
 end
 
 -- ============================================
--- TRACER ESP
+-- CREATE TRACER ESP (GARIS)
 -- ============================================
 local function CreateTracerESP(player)
     if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
@@ -64,19 +56,33 @@ local function CreateTracerESP(player)
     line.Thickness = espThickness
     line.Transparency = 0.5
     
+    return {
+        line = line,
+        player = player,
+        type = "tracer"
+    }
+end
+
+-- ============================================
+-- CREATE NAME ESP
+-- ============================================
+local function CreateNameESP(player)
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+        return nil
+    end
+    
     local nameTag = Drawing.new("Text")
     nameTag.Visible = false
     nameTag.Color = espColor
-    nameTag.Size = 12
+    nameTag.Size = 14
     nameTag.Center = true
     nameTag.Outline = true
     nameTag.OutlineColor = Color3.fromRGB(0, 0, 0)
     
     return {
-        line = line,
         nameTag = nameTag,
         player = player,
-        type = "tracer"
+        type = "name"
     }
 end
 
@@ -84,8 +90,6 @@ end
 -- UPDATE ESP
 -- ============================================
 local function UpdateESP()
-    if not espEnabled then return end
-    
     local viewportSize = Camera.ViewportSize
     local center = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
     
@@ -95,54 +99,60 @@ local function UpdateESP()
         local humanoid = character and character:FindFirstChild("Humanoid")
         local rootPart = character and character:FindFirstChild("HumanoidRootPart")
         
-        if not character or not humanoid or not rootPart or humanoid.Health <= 0 then
-            if esp.type == "box" then
+        local isAlive = character and humanoid and rootPart and humanoid.Health > 0
+        
+        if not isAlive then
+            if esp.type == "box" and esp.box then
                 esp.box.Visible = false
-                esp.nameTag.Visible = false
-            else
+            elseif esp.type == "tracer" and esp.line then
                 esp.line.Visible = false
+            elseif esp.type == "name" and esp.nameTag then
                 esp.nameTag.Visible = false
             end
         else
             local vector, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
             
             if onScreen then
-                if esp.type == "box" then
+                if esp.type == "box" and espBoxEnabled and esp.box then
                     local distance = (rootPart.Position - Camera.CFrame.Position).Magnitude
-                    local boxSize = math.clamp(300 / distance, 30, 150)
+                    local boxSize = math.clamp(250 / distance, 30, 130)
                     
                     local boxX = vector.X - boxSize / 2
-                    local boxY = vector.Y - boxSize / 1.5
+                    local boxY = vector.Y - boxSize / 1.3
                     
                     esp.box.Size = Vector2.new(boxSize, boxSize)
                     esp.box.Position = Vector2.new(boxX, boxY)
                     esp.box.Visible = true
                     esp.box.Color = espColor
                     esp.box.Thickness = espThickness
-                    
-                    esp.nameTag.Text = player.Name
-                    esp.nameTag.Position = Vector2.new(vector.X, boxY - 15)
-                    esp.nameTag.Visible = true
-                    esp.nameTag.Color = espColor
-                    
-                else -- tracer
+                elseif esp.type == "box" and not espBoxEnabled and esp.box then
+                    esp.box.Visible = false
+                end
+                
+                if esp.type == "tracer" and espTracerEnabled and esp.line then
                     esp.line.From = center
                     esp.line.To = Vector2.new(vector.X, vector.Y)
                     esp.line.Visible = true
                     esp.line.Color = espColor
                     esp.line.Thickness = espThickness
-                    
+                elseif esp.type == "tracer" and not espTracerEnabled and esp.line then
+                    esp.line.Visible = false
+                end
+                
+                if esp.type == "name" and espNameEnabled and esp.nameTag then
                     esp.nameTag.Text = player.Name
-                    esp.nameTag.Position = Vector2.new(vector.X, vector.Y - 15)
+                    esp.nameTag.Position = Vector2.new(vector.X, vector.Y - 20)
                     esp.nameTag.Visible = true
                     esp.nameTag.Color = espColor
+                elseif esp.type == "name" and not espNameEnabled and esp.nameTag then
+                    esp.nameTag.Visible = false
                 end
             else
-                if esp.type == "box" then
+                if esp.type == "box" and esp.box then
                     esp.box.Visible = false
-                    esp.nameTag.Visible = false
-                else
+                elseif esp.type == "tracer" and esp.line then
                     esp.line.Visible = false
+                elseif esp.type == "name" and esp.nameTag then
                     esp.nameTag.Visible = false
                 end
             end
@@ -157,101 +167,50 @@ local function AddPlayer(player)
     if player == LocalPlayer then return end
     if espObjects[player] then return end
     
-    if espMode == "box" then
-        espObjects[player] = CreateBoxESP(player)
-    else
-        espObjects[player] = CreateTracerESP(player)
-    end
+    espObjects[player] = {
+        box = CreateBoxESP(player),
+        tracer = CreateTracerESP(player),
+        name = CreateNameESP(player)
+    }
 end
 
 local function RemovePlayer(player)
     if espObjects[player] then
-        if espObjects[player].box then
-            espObjects[player].box:Remove()
+        if espObjects[player].box and espObjects[player].box.box then
+            espObjects[player].box.box:Remove()
         end
-        if espObjects[player].line then
-            espObjects[player].line:Remove()
+        if espObjects[player].tracer and espObjects[player].tracer.line then
+            espObjects[player].tracer.line:Remove()
         end
-        if espObjects[player].nameTag then
-            espObjects[player].nameTag:Remove()
+        if espObjects[player].name and espObjects[player].name.nameTag then
+            espObjects[player].name.nameTag:Remove()
         end
         espObjects[player] = nil
     end
 end
 
 local function RefreshESP()
-    for _, esp in pairs(espObjects) do
-        if esp.type == "box" and esp.box then
-            esp.box.Color = espColor
-            esp.box.Thickness = espThickness
-            esp.nameTag.Color = espColor
-        elseif esp.type == "tracer" and esp.line then
-            esp.line.Color = espColor
-            esp.line.Thickness = espThickness
-            esp.nameTag.Color = espColor
+    for _, espData in pairs(espObjects) do
+        if espData.box and espData.box.box then
+            espData.box.box.Color = espColor
+            espData.box.box.Thickness = espThickness
+        end
+        if espData.tracer and espData.tracer.line then
+            espData.tracer.line.Color = espColor
+            espData.tracer.line.Thickness = espThickness
+        end
+        if espData.name and espData.name.nameTag then
+            espData.name.nameTag.Color = espColor
         end
     end
 end
 
-local function StartESP()
-    if espEnabled then return end
-    
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            AddPlayer(player)
-        end
-    end
-    
-    Players.PlayerAdded:Connect(AddPlayer)
-    Players.PlayerRemoving:Connect(RemovePlayer)
+local function StartLoop()
     RunService.RenderStepped:Connect(UpdateESP)
-    
-    espEnabled = true
-end
-
-local function StopESP()
-    espEnabled = false
-    for _, esp in pairs(espObjects) do
-        if esp.type == "box" then
-            esp.box.Visible = false
-            esp.nameTag.Visible = false
-        else
-            esp.line.Visible = false
-            esp.nameTag.Visible = false
-        end
-    end
-end
-
-local function ToggleESP()
-    if espEnabled then
-        StopESP()
-    else
-        StartESP()
-    end
-    return espEnabled
-end
-
-local function SwitchMode(mode)
-    espMode = mode
-    local wasEnabled = espEnabled
-    if wasEnabled then
-        StopESP()
-    end
-    
-    for _, esp in pairs(espObjects) do
-        if esp.box then esp.box:Remove() end
-        if esp.line then esp.line:Remove() end
-        if esp.nameTag then esp.nameTag:Remove() end
-    end
-    espObjects = {}
-    
-    if wasEnabled then
-        StartESP()
-    end
 end
 
 -- ============================================
--- MENU UTAMA (LANGSUNG MUNCUL)
+-- MENU UTAMA
 -- ============================================
 local minimized = false
 local currentMenu = nil
@@ -276,36 +235,36 @@ local function CreateMainMenu()
     end
     currentMenu = screenGui
     
-    -- MAIN FRAME
+    -- MAIN FRAME (UKURAN KECIL: 260x260)
     local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 280, 0, 280)
-    mainFrame.Position = UDim2.new(0.5, -140, 0.5, -140)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(18, 19, 24)
-    mainFrame.BackgroundTransparency = 0.05
+    mainFrame.Size = UDim2.new(0, 260, 0, 260)
+    mainFrame.Position = UDim2.new(0.5, -130, 0.5, -130)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+    mainFrame.BackgroundTransparency = 0  -- GAK TEMBUS
     mainFrame.BorderSizePixel = 0
     mainFrame.ClipsDescendants = true
     mainFrame.Parent = screenGui
     
     local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 14)
+    mainCorner.CornerRadius = UDim.new(0, 12)
     mainCorner.Parent = mainFrame
     
     local border = Instance.new("UIStroke")
     border.Thickness = 1
     border.Color = Color3.fromRGB(155, 0, 255)
-    border.Transparency = 0.4
+    border.Transparency = 0.3
     border.Parent = mainFrame
     
     -- HEADER (Drag)
     local header = Instance.new("Frame")
-    header.Size = UDim2.new(1, 0, 0, 42)
+    header.Size = UDim2.new(1, 0, 0, 38)
     header.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
-    header.BackgroundTransparency = 0.2
+    header.BackgroundTransparency = 0.15
     header.BorderSizePixel = 0
     header.Parent = mainFrame
     
     local headerCorner = Instance.new("UICorner")
-    headerCorner.CornerRadius = UDim.new(0, 14)
+    headerCorner.CornerRadius = UDim.new(0, 12)
     headerCorner.Parent = header
     
     local title = Instance.new("TextLabel")
@@ -315,241 +274,220 @@ local function CreateMainMenu()
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.BackgroundTransparency = 1
     title.Font = Enum.Font.GothamBold
-    title.TextSize = 14
+    title.TextSize = 12
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Parent = header
     
     local minBtn = Instance.new("TextButton")
-    minBtn.Size = UDim2.new(0, 30, 0, 30)
-    minBtn.Position = UDim2.new(1, -68, 0.5, -15)
+    minBtn.Size = UDim2.new(0, 28, 0, 28)
+    minBtn.Position = UDim2.new(1, -62, 0.5, -14)
     minBtn.Text = "─"
     minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     minBtn.BackgroundTransparency = 1
     minBtn.Font = Enum.Font.GothamBold
-    minBtn.TextSize = 18
+    minBtn.TextSize = 16
     minBtn.Parent = header
     
     local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.new(0, 30, 0, 30)
-    closeBtn.Position = UDim2.new(1, -36, 0.5, -15)
+    closeBtn.Size = UDim2.new(0, 28, 0, 28)
+    closeBtn.Position = UDim2.new(1, -32, 0.5, -14)
     closeBtn.Text = "✕"
     closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     closeBtn.BackgroundTransparency = 1
     closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.TextSize = 16
+    closeBtn.TextSize = 14
     closeBtn.Parent = header
     
     -- CONTENT
     local content = Instance.new("Frame")
-    content.Size = UDim2.new(1, -20, 1, -60)
-    content.Position = UDim2.new(0, 10, 0, 55)
+    content.Size = UDim2.new(1, -16, 1, -52)
+    content.Position = UDim2.new(0, 8, 0, 46)
     content.BackgroundTransparency = 1
     content.Parent = mainFrame
     
-    local yOffset = 10
+    local yOffset = 0
     
     -- Tombol BOX ESP
     local boxBtn = Instance.new("TextButton")
-    boxBtn.Size = UDim2.new(1, 0, 0, 55)
+    boxBtn.Size = UDim2.new(1, 0, 0, 45)
     boxBtn.Position = UDim2.new(0, 0, 0, yOffset)
     boxBtn.Text = "📦 BOX ESP"
     boxBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    boxBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    boxBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
     boxBtn.Font = Enum.Font.GothamBold
-    boxBtn.TextSize = 16
+    boxBtn.TextSize = 13
     boxBtn.Parent = content
     
     local boxCorner = Instance.new("UICorner")
-    boxCorner.CornerRadius = UDim.new(0, 10)
+    boxCorner.CornerRadius = UDim.new(0, 8)
     boxCorner.Parent = boxBtn
     
     local boxStatus = Instance.new("TextLabel")
-    boxStatus.Size = UDim2.new(0.3, 0, 1, 0)
-    boxStatus.Position = UDim2.new(0.7, 0, 0, 0)
+    boxStatus.Size = UDim2.new(0.35, 0, 1, 0)
+    boxStatus.Position = UDim2.new(0.65, 0, 0, 0)
     boxStatus.Text = "OFF"
     boxStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
     boxStatus.BackgroundTransparency = 1
     boxStatus.Font = Enum.Font.GothamBold
-    boxStatus.TextSize = 14
+    boxStatus.TextSize = 12
     boxStatus.TextXAlignment = Enum.TextXAlignment.Right
     boxStatus.Parent = boxBtn
     
-    yOffset = yOffset + 65
+    yOffset = yOffset + 53
     
     -- Tombol TRACER ESP
     local tracerBtn = Instance.new("TextButton")
-    tracerBtn.Size = UDim2.new(1, 0, 0, 55)
+    tracerBtn.Size = UDim2.new(1, 0, 0, 45)
     tracerBtn.Position = UDim2.new(0, 0, 0, yOffset)
     tracerBtn.Text = "📏 TRACER ESP"
     tracerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    tracerBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    tracerBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
     tracerBtn.Font = Enum.Font.GothamBold
-    tracerBtn.TextSize = 16
+    tracerBtn.TextSize = 13
     tracerBtn.Parent = content
     
     local tracerCorner = Instance.new("UICorner")
-    tracerCorner.CornerRadius = UDim.new(0, 10)
+    tracerCorner.CornerRadius = UDim.new(0, 8)
     tracerCorner.Parent = tracerBtn
     
     local tracerStatus = Instance.new("TextLabel")
-    tracerStatus.Size = UDim2.new(0.3, 0, 1, 0)
-    tracerStatus.Position = UDim2.new(0.7, 0, 0, 0)
+    tracerStatus.Size = UDim2.new(0.35, 0, 1, 0)
+    tracerStatus.Position = UDim2.new(0.65, 0, 0, 0)
     tracerStatus.Text = "OFF"
     tracerStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
     tracerStatus.BackgroundTransparency = 1
     tracerStatus.Font = Enum.Font.GothamBold
-    tracerStatus.TextSize = 14
+    tracerStatus.TextSize = 12
     tracerStatus.TextXAlignment = Enum.TextXAlignment.Right
     tracerStatus.Parent = tracerBtn
     
-    yOffset = yOffset + 65
+    yOffset = yOffset + 53
+    
+    -- Tombol NAME ESP
+    local nameBtn = Instance.new("TextButton")
+    nameBtn.Size = UDim2.new(1, 0, 0, 45)
+    nameBtn.Position = UDim2.new(0, 0, 0, yOffset)
+    nameBtn.Text = "🏷️ NAME ESP"
+    nameBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    nameBtn.Font = Enum.Font.GothamBold
+    nameBtn.TextSize = 13
+    nameBtn.Parent = content
+    
+    local nameCorner = Instance.new("UICorner")
+    nameCorner.CornerRadius = UDim.new(0, 8)
+    nameCorner.Parent = nameBtn
+    
+    local nameStatus = Instance.new("TextLabel")
+    nameStatus.Size = UDim2.new(0.35, 0, 1, 0)
+    nameStatus.Position = UDim2.new(0.65, 0, 0, 0)
+    nameStatus.Text = "OFF"
+    nameStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+    nameStatus.BackgroundTransparency = 1
+    nameStatus.Font = Enum.Font.GothamBold
+    nameStatus.TextSize = 12
+    nameStatus.TextXAlignment = Enum.TextXAlignment.Right
+    nameStatus.Parent = nameBtn
+    
+    yOffset = yOffset + 53
     
     -- Setting KETEBALAN
     local thickFrame = Instance.new("Frame")
-    thickFrame.Size = UDim2.new(1, 0, 0, 50)
+    thickFrame.Size = UDim2.new(1, 0, 0, 45)
     thickFrame.Position = UDim2.new(0, 0, 0, yOffset)
-    thickFrame.BackgroundColor3 = Color3.fromRGB(34, 37, 48)
-    thickFrame.BackgroundTransparency = 0.5
+    thickFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+    thickFrame.BackgroundTransparency = 0
     thickFrame.BorderSizePixel = 0
     thickFrame.Parent = content
     
     local thickCorner = Instance.new("UICorner")
-    thickCorner.CornerRadius = UDim.new(0, 10)
+    thickCorner.CornerRadius = UDim.new(0, 8)
     thickCorner.Parent = thickFrame
     
     local thickLabel = Instance.new("TextLabel")
     thickLabel.Size = UDim2.new(0.5, 0, 1, 0)
-    thickLabel.Position = UDim2.new(0, 12, 0, 0)
+    thickLabel.Position = UDim2.new(0, 10, 0, 0)
     thickLabel.Text = "📏 KETEBALAN"
-    thickLabel.TextColor3 = Color3.fromRGB(240, 242, 250)
+    thickLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
     thickLabel.BackgroundTransparency = 1
     thickLabel.Font = Enum.Font.GothamBold
-    thickLabel.TextSize = 14
+    thickLabel.TextSize = 12
     thickLabel.TextXAlignment = Enum.TextXAlignment.Left
     thickLabel.Parent = thickFrame
     
     local thickValue = Instance.new("TextLabel")
-    thickValue.Size = UDim2.new(0.3, 0, 1, 0)
-    thickValue.Position = UDim2.new(0.55, 0, 0, 0)
+    thickValue.Size = UDim2.new(0.2, 0, 1, 0)
+    thickValue.Position = UDim2.new(0.5, 0, 0, 0)
     thickValue.Text = tostring(espThickness)
     thickValue.TextColor3 = Color3.fromRGB(155, 0, 255)
     thickValue.BackgroundTransparency = 1
     thickValue.Font = Enum.Font.GothamBold
-    thickValue.TextSize = 14
-    thickValue.TextXAlignment = Enum.TextXAlignment.Right
+    thickValue.TextSize = 13
+    thickValue.TextXAlignment = Enum.TextXAlignment.Center
     thickValue.Parent = thickFrame
     
     local minusBtn = Instance.new("TextButton")
-    minusBtn.Size = UDim2.new(0, 35, 0, 35)
-    minusBtn.Position = UDim2.new(1, -80, 0.5, -17)
+    minusBtn.Size = UDim2.new(0, 30, 0, 30)
+    minusBtn.Position = UDim2.new(1, -70, 0.5, -15)
     minusBtn.Text = "-"
     minusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    minusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    minusBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
     minusBtn.Font = Enum.Font.GothamBold
-    minusBtn.TextSize = 18
+    minusBtn.TextSize = 16
     minusBtn.Parent = thickFrame
     
     local plusBtn = Instance.new("TextButton")
-    plusBtn.Size = UDim2.new(0, 35, 0, 35)
-    plusBtn.Position = UDim2.new(1, -38, 0.5, -17)
+    plusBtn.Size = UDim2.new(0, 30, 0, 30)
+    plusBtn.Position = UDim2.new(1, -35, 0.5, -15)
     plusBtn.Text = "+"
     plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    plusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    plusBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
     plusBtn.Font = Enum.Font.GothamBold
-    plusBtn.TextSize = 18
+    plusBtn.TextSize = 16
     plusBtn.Parent = thickFrame
     
     local minusCorner = Instance.new("UICorner")
-    minusCorner.CornerRadius = UDim.new(0, 8)
+    minusCorner.CornerRadius = UDim.new(0, 6)
     minusCorner.Parent = minusBtn
     
     local plusCorner = Instance.new("UICorner")
-    plusCorner.CornerRadius = UDim.new(0, 8)
+    plusCorner.CornerRadius = UDim.new(0, 6)
     plusCorner.Parent = plusBtn
     
-    -- Variabel buat tau mode mana yang aktif
-    local activeMode = "box"
-    local boxActive = false
-    local tracerActive = false
-    
-    -- Fungsi update semua status tombol
-    local function UpdateButtonStatus()
-        if activeMode == "box" then
-            if boxActive then
-                boxBtn.BackgroundColor3 = Color3.fromRGB(80, 0, 120)
-                boxStatus.Text = "ON ✅"
-                boxStatus.TextColor3 = Color3.fromRGB(0, 255, 0)
-            else
-                boxBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-                boxStatus.Text = "OFF"
-                boxStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
-            end
-            tracerBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-            tracerStatus.Text = "OFF"
-            tracerStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
-        else -- tracer mode
-            if tracerActive then
-                tracerBtn.BackgroundColor3 = Color3.fromRGB(80, 0, 120)
-                tracerStatus.Text = "ON ✅"
-                tracerStatus.TextColor3 = Color3.fromRGB(0, 255, 0)
-            else
-                tracerBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-                tracerStatus.Text = "OFF"
-                tracerStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
-            end
-            boxBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-            boxStatus.Text = "OFF"
-            boxStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
-        end
+    -- UPDATE STATUS FUNCTION
+    local function UpdateAllStatus()
+        boxStatus.Text = espBoxEnabled and "ON ✅" or "OFF"
+        boxStatus.TextColor3 = espBoxEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        boxBtn.BackgroundColor3 = espBoxEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+        
+        tracerStatus.Text = espTracerEnabled and "ON ✅" or "OFF"
+        tracerStatus.TextColor3 = espTracerEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        tracerBtn.BackgroundColor3 = espTracerEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+        
+        nameStatus.Text = espNameEnabled and "ON ✅" or "OFF"
+        nameStatus.TextColor3 = espNameEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        nameBtn.BackgroundColor3 = espNameEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
     end
     
-    -- Tombol BOX ESP
+    -- BOX BUTTON
     boxBtn.MouseButton1Click:Connect(function()
-        if activeMode == "box" then
-            boxActive = not boxActive
-            if boxActive then
-                SwitchMode("box")
-                ToggleESP()
-            else
-                StopESP()
-                espEnabled = false
-            end
-        else
-            activeMode = "box"
-            tracerActive = false
-            StopESP()
-            espEnabled = false
-            boxActive = true
-            SwitchMode("box")
-            ToggleESP()
-        end
-        UpdateButtonStatus()
+        espBoxEnabled = not espBoxEnabled
+        UpdateAllStatus()
     end)
     
-    -- Tombol TRACER ESP
+    -- TRACER BUTTON
     tracerBtn.MouseButton1Click:Connect(function()
-        if activeMode == "tracer" then
-            tracerActive = not tracerActive
-            if tracerActive then
-                SwitchMode("tracer")
-                ToggleESP()
-            else
-                StopESP()
-                espEnabled = false
-            end
-        else
-            activeMode = "tracer"
-            boxActive = false
-            StopESP()
-            espEnabled = false
-            tracerActive = true
-            SwitchMode("tracer")
-            ToggleESP()
-        end
-        UpdateButtonStatus()
+        espTracerEnabled = not espTracerEnabled
+        UpdateAllStatus()
     end)
     
-    -- Ketebalan
+    -- NAME BUTTON
+    nameBtn.MouseButton1Click:Connect(function()
+        espNameEnabled = not espNameEnabled
+        UpdateAllStatus()
+    end)
+    
+    -- THICKNESS
     minusBtn.MouseButton1Click:Connect(function()
         espThickness = math.max(1, espThickness - 1)
         thickValue.Text = tostring(espThickness)
@@ -591,15 +529,15 @@ local function CreateMainMenu()
         end
     end)
     
-    -- MINIMIZE
+    -- MINIMIZE (JADI BAR KECIL)
     local function ToggleMinimize()
         if minimized then
-            mainFrame:TweenSize(UDim2.new(0, 280, 0, 280), "Out", "Quad", 0.2, true)
+            mainFrame:TweenSize(UDim2.new(0, 260, 0, 260), "Out", "Quad", 0.2, true)
             content.Visible = true
             minBtn.Text = "─"
             minimized = false
         else
-            mainFrame:TweenSize(UDim2.new(0, 160, 0, 42), "Out", "Quad", 0.2, true)
+            mainFrame:TweenSize(UDim2.new(0, 200, 0, 38), "Out", "Quad", 0.2, true)
             content.Visible = false
             minBtn.Text = "□"
             minimized = true
@@ -610,13 +548,27 @@ local function CreateMainMenu()
     
     -- CLOSE
     closeBtn.MouseButton1Click:Connect(function()
-        StopESP()
         screenGui:Destroy()
         currentMenu = nil
     end)
     
-    UpdateButtonStatus()
+    -- INITIAL UPDATE
+    UpdateAllStatus()
 end
+
+-- ============================================
+-- INITIALIZE PLAYERS & LOOP
+-- ============================================
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        AddPlayer(player)
+    end
+end
+
+Players.PlayerAdded:Connect(AddPlayer)
+Players.PlayerRemoving:Connect(RemovePlayer)
+
+StartLoop()
 
 -- ========== LANGSUNG JALANKAN MENU ==========
 CreateMainMenu()

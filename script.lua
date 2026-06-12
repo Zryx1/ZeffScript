@@ -1,7 +1,6 @@
 -- ========================================
--- VORTEX MINI ULTRA - UKURAN SANGAT KECIL
--- LENGKAP SLIDER: SPEED, JUMP, RADIUS, DAMAGE
--- GESER KE BAWAH, SEMUA FITUR WORK
+-- VORTEX EVIL - KILL ALL & BAN ALL
+-- UKURAN KECIL, GESER KE BAWAH
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -164,6 +163,45 @@ local function ManualAttack()
     end
 end
 
+-- ========== FITUR JAHAT ==========
+-- KILL ALL - Bunuh semua player
+local function KillAll()
+    local killed = 0
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            local char = p.Character
+            if char then
+                local hum = char:FindFirstChild("Humanoid")
+                if hum and hum.Health > 0 then
+                    hum.Health = 0
+                    killed = killed + 1
+                end
+            end
+        end
+    end
+    statusText.Text = "💀"..killed
+    statusText.TextColor3 = Color3.fromRGB(255,0,0)
+    task.wait(0.5)
+    statusText.Text = "✓"
+    statusText.TextColor3 = Color3.fromRGB(0,255,0)
+end
+
+-- BAN ALL - Kick semua player (effect kayak ban)
+local function BanAll()
+    local kicked = 0
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            p:Kick("🚫 ANDA DI BAN OLEH VORTEX 🚫\n\nJangan coba-coba balik lagi!")
+            kicked = kicked + 1
+        end
+    end
+    statusText.Text = "🚫"..kicked
+    statusText.TextColor3 = Color3.fromRGB(255,255,0)
+    task.wait(0.5)
+    statusText.Text = "✓"
+    statusText.TextColor3 = Color3.fromRGB(0,255,0)
+end
+
 -- ========== SPEED JUMP ==========
 local function ApplySpeed()
     local char = LocalPlayer.Character
@@ -179,15 +217,15 @@ local function ApplyJump()
     end
 end
 
--- ========== BUAT GUI (UKURAN SANGAT KECIL) ==========
+-- ========== BUAT GUI ==========
 local gui = Instance.new("ScreenGui")
-gui.Name = "VortexMiniUltra"
+gui.Name = "VortexEvil"
 gui.ResetOnSpawn = false
 gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- FRAME UKURAN 160x320 (SUPER KECIL)
+-- FRAME UKURAN 160x360 (ditambah dikit buat tombol baru)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 160, 0, 320)
+frame.Size = UDim2.new(0, 160, 0, 380)
 frame.Position = UDim2.new(0.5, -80, 0.1, 0)
 frame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
 frame.BackgroundTransparency = 0
@@ -248,12 +286,12 @@ scroll.Position = UDim2.new(0, 3, 0, 32)
 scroll.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 scroll.BackgroundTransparency = 0
 scroll.BorderSizePixel = 0
-scroll.CanvasSize = UDim2.new(0, 0, 0, 560)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 680)
 scroll.ScrollBarThickness = 2
 scroll.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
 scroll.Parent = frame
 
--- ========== ISI (UKURAN MINI) ==========
+-- ========== ISI ==========
 local y = 3
 
 -- ===== ESP SECTION =====
@@ -268,7 +306,6 @@ espTitle.TextSize = 9
 espTitle.Parent = scroll
 y = y + 16
 
--- Master ESP
 local masterBtn = Instance.new("TextButton")
 masterBtn.Size = UDim2.new(1, -6, 0, 22)
 masterBtn.Position = UDim2.new(0, 3, 0, y)
@@ -283,7 +320,6 @@ mCorner.CornerRadius = UDim.new(0, 4)
 mCorner.Parent = masterBtn
 y = y + 25
 
--- Box ESP
 local boxBtn = Instance.new("TextButton")
 boxBtn.Size = UDim2.new(1, -6, 0, 22)
 boxBtn.Position = UDim2.new(0, 3, 0, y)
@@ -298,7 +334,6 @@ bCorner.CornerRadius = UDim.new(0, 4)
 bCorner.Parent = boxBtn
 y = y + 25
 
--- Tracer ESP
 local tracerBtn = Instance.new("TextButton")
 tracerBtn.Size = UDim2.new(1, -6, 0, 22)
 tracerBtn.Position = UDim2.new(0, 3, 0, y)
@@ -313,7 +348,6 @@ tCorner.CornerRadius = UDim.new(0, 4)
 tCorner.Parent = tracerBtn
 y = y + 25
 
--- Name ESP
 local nameBtn = Instance.new("TextButton")
 nameBtn.Size = UDim2.new(1, -6, 0, 22)
 nameBtn.Position = UDim2.new(0, 3, 0, y)
@@ -390,7 +424,6 @@ hitTitle.TextSize = 9
 hitTitle.Parent = scroll
 y = y + 16
 
--- Attack Button
 local attackBtn = Instance.new("TextButton")
 attackBtn.Size = UDim2.new(1, -6, 0, 32)
 attackBtn.Position = UDim2.new(0, 3, 0, y)
@@ -405,7 +438,6 @@ aCorner.CornerRadius = UDim.new(0, 6)
 aCorner.Parent = attackBtn
 y = y + 36
 
--- Auto Hit Button
 local autoBtn = Instance.new("TextButton")
 autoBtn.Size = UDim2.new(1, -6, 0, 22)
 autoBtn.Position = UDim2.new(0, 3, 0, y)
@@ -420,7 +452,6 @@ auCorner.CornerRadius = UDim.new(0, 4)
 auCorner.Parent = autoBtn
 y = y + 25
 
--- Auto Status
 local autoStatus = Instance.new("TextLabel")
 autoStatus.Size = UDim2.new(1, -6, 0, 14)
 autoStatus.Position = UDim2.new(0, 3, 0, y)
@@ -432,7 +463,7 @@ autoStatus.TextSize = 10
 autoStatus.Parent = scroll
 y = y + 16
 
--- ===== SLIDER RADIUS =====
+-- Radius Slider
 local radiusFrame = Instance.new("Frame")
 radiusFrame.Size = UDim2.new(1, -6, 0, 24)
 radiusFrame.Position = UDim2.new(0, 3, 0, y)
@@ -482,7 +513,7 @@ rpCorner.CornerRadius = UDim.new(0, 4)
 rpCorner.Parent = radiusPlus
 y = y + 28
 
--- ===== SLIDER DAMAGE =====
+-- Damage Slider
 local damageFrame = Instance.new("Frame")
 damageFrame.Size = UDim2.new(1, -6, 0, 24)
 damageFrame.Position = UDim2.new(0, 3, 0, y)
@@ -532,6 +563,48 @@ dpCorner.CornerRadius = UDim.new(0, 4)
 dpCorner.Parent = damagePlus
 y = y + 28
 
+-- ===== FITUR JAHAT =====
+local evilTitle = Instance.new("TextLabel")
+evilTitle.Size = UDim2.new(1, -6, 0, 14)
+evilTitle.Position = UDim2.new(0, 3, 0, y)
+evilTitle.Text = "🔥 EVIL 🔥"
+evilTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
+evilTitle.BackgroundTransparency = 1
+evilTitle.Font = Enum.Font.GothamBold
+evilTitle.TextSize = 9
+evilTitle.Parent = scroll
+y = y + 16
+
+-- Kill All Button
+local killBtn = Instance.new("TextButton")
+killBtn.Size = UDim2.new(1, -6, 0, 32)
+killBtn.Position = UDim2.new(0, 3, 0, y)
+killBtn.Text = "⛔ KILL ALL ⛔"
+killBtn.TextColor3 = Color3.fromRGB(255,255,255)
+killBtn.BackgroundColor3 = Color3.fromRGB(139, 0, 0)
+killBtn.Font = Enum.Font.GothamBold
+killBtn.TextSize = 10
+killBtn.Parent = scroll
+local kCorner = Instance.new("UICorner")
+kCorner.CornerRadius = UDim.new(0, 6)
+kCorner.Parent = killBtn
+y = y + 36
+
+-- Ban All Button
+local banBtn = Instance.new("TextButton")
+banBtn.Size = UDim2.new(1, -6, 0, 32)
+banBtn.Position = UDim2.new(0, 3, 0, y)
+banBtn.Text = "🚫 BAN ALL 🚫"
+banBtn.TextColor3 = Color3.fromRGB(255,255,255)
+banBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 100)
+banBtn.Font = Enum.Font.GothamBold
+banBtn.TextSize = 10
+banBtn.Parent = scroll
+local bCorner2 = Instance.new("UICorner")
+bCorner2.CornerRadius = UDim.new(0, 6)
+bCorner2.Parent = banBtn
+y = y + 36
+
 -- ===== BOOST SECTION =====
 local boostTitle = Instance.new("TextLabel")
 boostTitle.Size = UDim2.new(1, -6, 0, 14)
@@ -544,7 +617,6 @@ boostTitle.TextSize = 9
 boostTitle.Parent = scroll
 y = y + 16
 
--- Speed Button
 local speedBtn = Instance.new("TextButton")
 speedBtn.Size = UDim2.new(1, -6, 0, 22)
 speedBtn.Position = UDim2.new(0, 3, 0, y)
@@ -559,7 +631,6 @@ spCorner.CornerRadius = UDim.new(0, 4)
 spCorner.Parent = speedBtn
 y = y + 25
 
--- Speed Slider
 local speedSFrame = Instance.new("Frame")
 speedSFrame.Size = UDim2.new(1, -6, 0, 24)
 speedSFrame.Position = UDim2.new(0, 3, 0, y)
@@ -609,7 +680,6 @@ spCorner2.CornerRadius = UDim.new(0, 4)
 spCorner2.Parent = speedSPlus
 y = y + 28
 
--- Jump Button
 local jumpBtn = Instance.new("TextButton")
 jumpBtn.Size = UDim2.new(1, -6, 0, 22)
 jumpBtn.Position = UDim2.new(0, 3, 0, y)
@@ -624,7 +694,6 @@ jpCorner.CornerRadius = UDim.new(0, 4)
 jpCorner.Parent = jumpBtn
 y = y + 25
 
--- Jump Slider
 local jumpSFrame = Instance.new("Frame")
 jumpSFrame.Size = UDim2.new(1, -6, 0, 24)
 jumpSFrame.Position = UDim2.new(0, 3, 0, y)
@@ -674,7 +743,7 @@ jpCorner2.CornerRadius = UDim.new(0, 4)
 jpCorner2.Parent = jumpSPlus
 y = y + 28
 
--- Status Text (mini)
+-- Status Text
 local statusText = Instance.new("TextLabel")
 statusText.Size = UDim2.new(1, -6, 0, 18)
 statusText.Position = UDim2.new(0, 3, 0, y)
@@ -749,6 +818,10 @@ attackBtn.MouseButton1Click:Connect(ManualAttack)
 autoBtn.MouseButton1Click:Connect(UpdateAuto)
 speedBtn.MouseButton1Click:Connect(UpdateSpeed)
 jumpBtn.MouseButton1Click:Connect(UpdateJump)
+
+-- Tombol JAHAT
+killBtn.MouseButton1Click:Connect(KillAll)
+banBtn.MouseButton1Click:Connect(BanAll)
 
 -- Thick Slider
 thickMinus.MouseButton1Click:Connect(function()
@@ -836,7 +909,7 @@ end)
 local min = false
 minBtn.MouseButton1Click:Connect(function()
     if min then
-        frame.Size = UDim2.new(0, 160, 0, 320)
+        frame.Size = UDim2.new(0, 160, 0, 380)
         scroll.Visible = true
         minBtn.Text = "-"
         min = false
@@ -888,7 +961,7 @@ end)()
 RunService.RenderStepped:Connect(UpdateESP)
 
 print("========================")
-print("VORTEX MINI ULTRA - OK!")
-print("SIZE: 160x320")
-print("SLIDER LENGKAP!")
+print("VORTEX EVIL - LOADED!")
+print("🔥 KILL ALL ⛔")
+print("🚫 BAN ALL 🚫")
 print("========================")

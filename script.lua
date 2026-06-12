@@ -1,8 +1,7 @@
 -- ============================================
 -- ZEFF VORTEX - PRIVATE SCRIPT
 -- PASSWORD: zeffproject
--- FITUR: BOX ESP + TRACER ESP
--- LAYOUT: KIRI KATEGORI | KANAN SETTING
+-- FITUR: BOX ESP + TRACER ESP (SIMPLE & RINGAN)
 -- ============================================
 
 local Password = "zeffproject"
@@ -14,7 +13,6 @@ local espEnabled = false
 local espMode = "box"  -- "box" or "tracer"
 local espColor = Color3.fromRGB(155, 0, 255)  -- UNGU NEON
 local espThickness = 2
-local espTransparency = 0.5
 
 local espObjects = {}
 local Players = game:GetService("Players")
@@ -24,7 +22,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ============================================
--- BOX ESP
+-- BOX ESP (KOTAK)
 -- ============================================
 local function CreateBoxESP(player)
     if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
@@ -36,7 +34,7 @@ local function CreateBoxESP(player)
     box.Color = espColor
     box.Thickness = espThickness
     box.Filled = false
-    box.Transparency = espTransparency
+    box.Transparency = 0.5
     
     local nameTag = Drawing.new("Text")
     nameTag.Visible = false
@@ -46,25 +44,16 @@ local function CreateBoxESP(player)
     nameTag.Outline = true
     nameTag.OutlineColor = Color3.fromRGB(0, 0, 0)
     
-    local healthText = Drawing.new("Text")
-    healthText.Visible = false
-    healthText.Color = Color3.fromRGB(255, 255, 255)
-    healthText.Size = 11
-    healthText.Center = true
-    healthText.Outline = true
-    healthText.OutlineColor = Color3.fromRGB(0, 0, 0)
-    
     return {
         box = box,
         nameTag = nameTag,
-        healthText = healthText,
         player = player,
         type = "box"
     }
 end
 
 -- ============================================
--- TRACER ESP (garis ke player)
+-- TRACER ESP (GARIS KE PLAYER)
 -- ============================================
 local function CreateTracerESP(player)
     if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
@@ -75,7 +64,7 @@ local function CreateTracerESP(player)
     line.Visible = false
     line.Color = espColor
     line.Thickness = espThickness
-    line.Transparency = espTransparency
+    line.Transparency = 0.5
     
     local nameTag = Drawing.new("Text")
     nameTag.Visible = false
@@ -112,7 +101,6 @@ local function UpdateESP()
             if esp.type == "box" then
                 esp.box.Visible = false
                 esp.nameTag.Visible = false
-                if esp.healthText then esp.healthText.Visible = false end
             else
                 esp.line.Visible = false
                 esp.nameTag.Visible = false
@@ -133,17 +121,11 @@ local function UpdateESP()
                     esp.box.Visible = true
                     esp.box.Color = espColor
                     esp.box.Thickness = espThickness
-                    esp.box.Transparency = espTransparency
                     
                     esp.nameTag.Text = player.Name
                     esp.nameTag.Position = Vector2.new(vector.X, boxY - 15)
                     esp.nameTag.Visible = true
                     esp.nameTag.Color = espColor
-                    
-                    local healthPercent = math.floor((humanoid.Health / humanoid.MaxHealth) * 100)
-                    esp.healthText.Text = "❤️ " .. healthPercent .. "%"
-                    esp.healthText.Position = Vector2.new(vector.X, boxY + boxSize + 12)
-                    esp.healthText.Visible = true
                     
                 else -- tracer
                     esp.line.From = center
@@ -151,7 +133,6 @@ local function UpdateESP()
                     esp.line.Visible = true
                     esp.line.Color = espColor
                     esp.line.Thickness = espThickness
-                    esp.line.Transparency = espTransparency
                     
                     esp.nameTag.Text = player.Name
                     esp.nameTag.Position = Vector2.new(vector.X, vector.Y - 15)
@@ -162,7 +143,6 @@ local function UpdateESP()
                 if esp.type == "box" then
                     esp.box.Visible = false
                     esp.nameTag.Visible = false
-                    if esp.healthText then esp.healthText.Visible = false end
                 else
                     esp.line.Visible = false
                     esp.nameTag.Visible = false
@@ -197,9 +177,6 @@ local function RemovePlayer(player)
         if espObjects[player].nameTag then
             espObjects[player].nameTag:Remove()
         end
-        if espObjects[player].healthText then
-            espObjects[player].healthText:Remove()
-        end
         espObjects[player] = nil
     end
 end
@@ -209,12 +186,10 @@ local function RefreshESP()
         if esp.type == "box" and esp.box then
             esp.box.Color = espColor
             esp.box.Thickness = espThickness
-            esp.box.Transparency = espTransparency
             esp.nameTag.Color = espColor
         elseif esp.type == "tracer" and esp.line then
             esp.line.Color = espColor
             esp.line.Thickness = espThickness
-            esp.line.Transparency = espTransparency
             esp.nameTag.Color = espColor
         end
     end
@@ -242,7 +217,6 @@ local function StopESP()
         if esp.type == "box" then
             esp.box.Visible = false
             esp.nameTag.Visible = false
-            if esp.healthText then esp.healthText.Visible = false end
         else
             esp.line.Visible = false
             esp.nameTag.Visible = false
@@ -261,7 +235,6 @@ end
 
 local function SwitchMode(mode)
     espMode = mode
-    -- Re-create semua ESP dengan mode baru
     local wasEnabled = espEnabled
     if wasEnabled then
         StopESP()
@@ -271,7 +244,6 @@ local function SwitchMode(mode)
         if esp.box then esp.box:Remove() end
         if esp.line then esp.line:Remove() end
         if esp.nameTag then esp.nameTag:Remove() end
-        if esp.healthText then esp.healthText:Remove() end
     end
     espObjects = {}
     
@@ -361,7 +333,7 @@ local function AskPassword()
 end
 
 -- ============================================
--- MENU UTAMA (Layout KIRI KATEGORI | KANAN SETTING)
+-- MENU UTAMA (SIMPLE & RINGAN)
 -- ============================================
 local minimized = false
 local currentMenu = nil
@@ -386,10 +358,10 @@ local function CreateMainMenu()
     end
     currentMenu = screenGui
     
-    -- MAIN FRAME (Ukuran lebih kecil)
+    -- MAIN FRAME
     local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 520, 0, 340)
-    mainFrame.Position = UDim2.new(0.5, -260, 0.5, -170)
+    mainFrame.Size = UDim2.new(0, 320, 0, 420)
+    mainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
     mainFrame.BackgroundColor3 = Color3.fromRGB(18, 19, 24)
     mainFrame.BackgroundTransparency = 0.05
     mainFrame.BorderSizePixel = 0
@@ -406,7 +378,7 @@ local function CreateMainMenu()
     border.Transparency = 0.4
     border.Parent = mainFrame
     
-    -- ========== HEADER (Drag) ==========
+    -- HEADER
     local header = Instance.new("Frame")
     header.Size = UDim2.new(1, 0, 0, 42)
     header.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
@@ -419,8 +391,8 @@ local function CreateMainMenu()
     headerCorner.Parent = header
     
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(0.5, 0, 1, 0)
-    title.Position = UDim2.new(0.02, 0, 0, 0)
+    title.Size = UDim2.new(0.6, 0, 1, 0)
+    title.Position = UDim2.new(0.03, 0, 0, 0)
     title.Text = "🔮 ZEFF VORTEX"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.BackgroundTransparency = 1
@@ -449,438 +421,239 @@ local function CreateMainMenu()
     closeBtn.TextSize = 16
     closeBtn.Parent = header
     
-    -- ========== LAYOUT: KIRI (KATEGORI) + KANAN (SETTING) ==========
-    local leftPanel = Instance.new("Frame")
-    leftPanel.Size = UDim2.new(0, 140, 1, -50)
-    leftPanel.Position = UDim2.new(0, 0, 0, 50)
-    leftPanel.BackgroundColor3 = Color3.fromRGB(26, 28, 36)
-    leftPanel.BackgroundTransparency = 0.5
-    leftPanel.BorderSizePixel = 0
-    leftPanel.Parent = mainFrame
+    -- ========== CONTENT ==========
+    local content = Instance.new("ScrollingFrame")
+    content.Size = UDim2.new(1, -20, 1, -60)
+    content.Position = UDim2.new(0, 10, 0, 55)
+    content.BackgroundTransparency = 1
+    content.CanvasSize = UDim2.new(0, 0, 0, 0)
+    content.ScrollBarThickness = 2
+    content.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
+    content.Parent = mainFrame
     
-    local leftCorner = Instance.new("UICorner")
-    leftCorner.CornerRadius = UDim.new(0, 0)
-    leftCorner.Parent = leftPanel
+    local yOffset = 5
     
-    local rightPanel = Instance.new("Frame")
-    rightPanel.Size = UDim2.new(1, -150, 1, -50)
-    rightPanel.Position = UDim2.new(0, 145, 0, 50)
-    rightPanel.BackgroundTransparency = 1
-    rightPanel.BorderSizePixel = 0
-    rightPanel.Parent = mainFrame
+    -- Tombol TOGGLE ESP (ON/OFF)
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(1, 0, 0, 55)
+    toggleBtn.Position = UDim2.new(0, 0, 0, yOffset)
+    toggleBtn.Text = espEnabled and "🔘 ESP: ON" or "⚪ ESP: OFF"
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.BackgroundColor3 = espEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(40, 40, 60)
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.TextSize = 16
+    toggleBtn.Parent = content
     
-    -- ========== KATEGORI (KIRI) ==========
-    local categories = {
-        {id = "esp", name = "🎮 ESP", icon = "🎮"},
-        {id = "color", name = "🎨 WARNA", icon = "🎨"},
-        {id = "settings", name = "⚙ SETTING", icon = "⚙"},
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0, 10)
+    toggleCorner.Parent = toggleBtn
+    
+    toggleBtn.MouseButton1Click:Connect(function()
+        ToggleESP()
+        toggleBtn.Text = espEnabled and "🔘 ESP: ON" or "⚪ ESP: OFF"
+        toggleBtn.BackgroundColor3 = espEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(40, 40, 60)
+    end)
+    
+    yOffset = yOffset + 65
+    
+    -- Mode ESP (Box / Tracer)
+    local modeFrame = Instance.new("Frame")
+    modeFrame.Size = UDim2.new(1, 0, 0, 50)
+    modeFrame.Position = UDim2.new(0, 0, 0, yOffset)
+    modeFrame.BackgroundColor3 = Color3.fromRGB(34, 37, 48)
+    modeFrame.BackgroundTransparency = 0.5
+    modeFrame.BorderSizePixel = 0
+    modeFrame.Parent = content
+    
+    local modeCorner = Instance.new("UICorner")
+    modeCorner.CornerRadius = UDim.new(0, 10)
+    modeCorner.Parent = modeFrame
+    
+    local modeLabel = Instance.new("TextLabel")
+    modeLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    modeLabel.Position = UDim2.new(0, 12, 0, 0)
+    modeLabel.Text = "📐 MODE ESP"
+    modeLabel.TextColor3 = Color3.fromRGB(240, 242, 250)
+    modeLabel.BackgroundTransparency = 1
+    modeLabel.Font = Enum.Font.GothamBold
+    modeLabel.TextSize = 14
+    modeLabel.TextXAlignment = Enum.TextXAlignment.Left
+    modeLabel.Parent = modeFrame
+    
+    local modeValue = Instance.new("TextButton")
+    modeValue.Size = UDim2.new(0.4, 0, 0.7, 0)
+    modeValue.Position = UDim2.new(0.55, 0, 0.15, 0)
+    modeValue.Text = espMode == "box" and "📦 BOX" or "📏 TRACER"
+    modeValue.TextColor3 = Color3.fromRGB(155, 0, 255)
+    modeValue.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    modeValue.Font = Enum.Font.GothamBold
+    modeValue.TextSize = 14
+    modeValue.Parent = modeFrame
+    
+    local modeValueCorner = Instance.new("UICorner")
+    modeValueCorner.CornerRadius = UDim.new(0, 8)
+    modeValueCorner.Parent = modeValue
+    
+    modeValue.MouseButton1Click:Connect(function()
+        if espMode == "box" then
+            SwitchMode("tracer")
+            modeValue.Text = "📏 TRACER"
+        else
+            SwitchMode("box")
+            modeValue.Text = "📦 BOX"
+        end
+    end)
+    
+    yOffset = yOffset + 60
+    
+    -- Ketebalan
+    local thickFrame = Instance.new("Frame")
+    thickFrame.Size = UDim2.new(1, 0, 0, 50)
+    thickFrame.Position = UDim2.new(0, 0, 0, yOffset)
+    thickFrame.BackgroundColor3 = Color3.fromRGB(34, 37, 48)
+    thickFrame.BackgroundTransparency = 0.5
+    thickFrame.BorderSizePixel = 0
+    thickFrame.Parent = content
+    
+    local thickCorner = Instance.new("UICorner")
+    thickCorner.CornerRadius = UDim.new(0, 10)
+    thickCorner.Parent = thickFrame
+    
+    local thickLabel = Instance.new("TextLabel")
+    thickLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    thickLabel.Position = UDim2.new(0, 12, 0, 0)
+    thickLabel.Text = "📏 KETEBALAN"
+    thickLabel.TextColor3 = Color3.fromRGB(240, 242, 250)
+    thickLabel.BackgroundTransparency = 1
+    thickLabel.Font = Enum.Font.GothamBold
+    thickLabel.TextSize = 14
+    thickLabel.TextXAlignment = Enum.TextXAlignment.Left
+    thickLabel.Parent = thickFrame
+    
+    local thickValue = Instance.new("TextLabel")
+    thickValue.Size = UDim2.new(0.3, 0, 1, 0)
+    thickValue.Position = UDim2.new(0.55, 0, 0, 0)
+    thickValue.Text = tostring(espThickness)
+    thickValue.TextColor3 = Color3.fromRGB(155, 0, 255)
+    thickValue.BackgroundTransparency = 1
+    thickValue.Font = Enum.Font.GothamBold
+    thickValue.TextSize = 14
+    thickValue.TextXAlignment = Enum.TextXAlignment.Right
+    thickValue.Parent = thickFrame
+    
+    local minusBtn = Instance.new("TextButton")
+    minusBtn.Size = UDim2.new(0, 35, 0, 35)
+    minusBtn.Position = UDim2.new(1, -80, 0.5, -17)
+    minusBtn.Text = "-"
+    minusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    minusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    minusBtn.Font = Enum.Font.GothamBold
+    minusBtn.TextSize = 18
+    minusBtn.Parent = thickFrame
+    
+    local plusBtn = Instance.new("TextButton")
+    plusBtn.Size = UDim2.new(0, 35, 0, 35)
+    plusBtn.Position = UDim2.new(1, -38, 0.5, -17)
+    plusBtn.Text = "+"
+    plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    plusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    plusBtn.Font = Enum.Font.GothamBold
+    plusBtn.TextSize = 18
+    plusBtn.Parent = thickFrame
+    
+    local minusCorner = Instance.new("UICorner")
+    minusCorner.CornerRadius = UDim.new(0, 8)
+    minusCorner.Parent = minusBtn
+    
+    local plusCorner = Instance.new("UICorner")
+    plusCorner.CornerRadius = UDim.new(0, 8)
+    plusCorner.Parent = plusBtn
+    
+    minusBtn.MouseButton1Click:Connect(function()
+        espThickness = math.max(1, espThickness - 1)
+        thickValue.Text = tostring(espThickness)
+        RefreshESP()
+    end)
+    
+    plusBtn.MouseButton1Click:Connect(function()
+        espThickness = math.min(5, espThickness + 1)
+        thickValue.Text = tostring(espThickness)
+        RefreshESP()
+    end)
+    
+    yOffset = yOffset + 65
+    
+    -- Pilihan Warna (simplified)
+    local colorLabel = Instance.new("TextLabel")
+    colorLabel.Size = UDim2.new(1, 0, 0, 25)
+    colorLabel.Position = UDim2.new(0, 0, 0, yOffset)
+    colorLabel.Text = "🎨 WARNA ESP"
+    colorLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
+    colorLabel.BackgroundTransparency = 1
+    colorLabel.Font = Enum.Font.GothamBold
+    colorLabel.TextSize = 13
+    colorLabel.Parent = content
+    
+    yOffset = yOffset + 30
+    
+    local colorButtons = {"UNGU", "MERAH", "HIJAU", "BIRU", "KUNING"}
+    local colorValues = {
+        UNGU = Color3.fromRGB(155, 0, 255),
+        MERAH = Color3.fromRGB(255, 0, 0),
+        HIJAU = Color3.fromRGB(0, 255, 0),
+        BIRU = Color3.fromRGB(0, 100, 255),
+        KUNING = Color3.fromRGB(255, 200, 0)
     }
     
-    local activeCategory = "esp"
-    local categoryButtons = {}
+    local colorRow = Instance.new("Frame")
+    colorRow.Size = UDim2.new(1, 0, 0, 35)
+    colorRow.Position = UDim2.new(0, 0, 0, yOffset)
+    colorRow.BackgroundTransparency = 1
+    colorRow.Parent = content
     
-    local function updateRightPanel()
-        -- Bersihkan rightPanel
-        for _, child in ipairs(rightPanel:GetChildren()) do
-            child:Destroy()
-        end
+    local xPos = 0
+    for _, name in ipairs(colorButtons) do
+        local colorBtn = Instance.new("TextButton")
+        colorBtn.Size = UDim2.new(0.18, 0, 1, 0)
+        colorBtn.Position = UDim2.new(xPos, 2, 0, 0)
+        colorBtn.Text = name
+        colorBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        colorBtn.BackgroundColor3 = colorValues[name]
+        colorBtn.BackgroundTransparency = 0.3
+        colorBtn.Font = Enum.Font.GothamBold
+        colorBtn.TextSize = 10
+        colorBtn.Parent = colorRow
         
-        if activeCategory == "esp" then
-            -- ========== ESP SETTINGS ==========
-            local espFrame = Instance.new("Frame")
-            espFrame.Size = UDim2.new(1, -20, 1, -20)
-            espFrame.Position = UDim2.new(0, 10, 0, 10)
-            espFrame.BackgroundTransparency = 1
-            espFrame.Parent = rightPanel
-            
-            -- Title
-            local titleLabel = Instance.new("TextLabel")
-            titleLabel.Size = UDim2.new(1, 0, 0, 30)
-            titleLabel.Text = "⚡ PENGATURAN ESP"
-            titleLabel.TextColor3 = Color3.fromRGB(155, 0, 255)
-            titleLabel.BackgroundTransparency = 1
-            titleLabel.Font = Enum.Font.GothamBold
-            titleLabel.TextSize = 14
-            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-            titleLabel.Parent = espFrame
-            
-            -- Toggle ESP (ON/OFF)
-            local espToggleFrame = Instance.new("Frame")
-            espToggleFrame.Size = UDim2.new(1, 0, 0, 40)
-            espToggleFrame.Position = UDim2.new(0, 0, 0, 40)
-            espToggleFrame.BackgroundColor3 = Color3.fromRGB(34, 37, 48)
-            espToggleFrame.BackgroundTransparency = 0.5
-            espToggleFrame.BorderSizePixel = 0
-            espToggleFrame.Parent = espFrame
-            
-            local toggleCorner = Instance.new("UICorner")
-            toggleCorner.CornerRadius = UDim.new(0, 8)
-            toggleCorner.Parent = espToggleFrame
-            
-            local toggleLabel = Instance.new("TextLabel")
-            toggleLabel.Size = UDim2.new(0.6, 0, 1, 0)
-            toggleLabel.Position = UDim2.new(0, 12, 0, 0)
-            toggleLabel.Text = "🔘 STATUS ESP"
-            toggleLabel.TextColor3 = Color3.fromRGB(240, 242, 250)
-            toggleLabel.BackgroundTransparency = 1
-            toggleLabel.Font = Enum.Font.Gotham
-            toggleLabel.TextSize = 13
-            toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
-            toggleLabel.Parent = espToggleFrame
-            
-            local toggleStatus = Instance.new("TextLabel")
-            toggleStatus.Size = UDim2.new(0.3, 0, 1, 0)
-            toggleStatus.Position = UDim2.new(0.7, 0, 0, 0)
-            toggleStatus.Text = espEnabled and "ON ✅" or "OFF ❌"
-            toggleStatus.TextColor3 = espEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-            toggleStatus.BackgroundTransparency = 1
-            toggleStatus.Font = Enum.Font.GothamBold
-            toggleStatus.TextSize = 13
-            toggleStatus.TextXAlignment = Enum.TextXAlignment.Right
-            toggleStatus.Parent = espToggleFrame
-            
-            local toggleBtn = Instance.new("TextButton")
-            toggleBtn.Size = UDim2.new(1, 0, 1, 0)
-            toggleBtn.Text = ""
-            toggleBtn.BackgroundTransparency = 1
-            toggleBtn.Parent = espToggleFrame
-            
-            toggleBtn.MouseButton1Click:Connect(function()
-                ToggleESP()
-                toggleStatus.Text = espEnabled and "ON ✅" or "OFF ❌"
-                toggleStatus.TextColor3 = espEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-            end)
-            
-            -- Mode ESP (Box / Tracer)
-            local modeFrame = Instance.new("Frame")
-            modeFrame.Size = UDim2.new(1, 0, 0, 40)
-            modeFrame.Position = UDim2.new(0, 0, 0, 90)
-            modeFrame.BackgroundColor3 = Color3.fromRGB(34, 37, 48)
-            modeFrame.BackgroundTransparency = 0.5
-            modeFrame.BorderSizePixel = 0
-            modeFrame.Parent = espFrame
-            
-            local modeCorner = Instance.new("UICorner")
-            modeCorner.CornerRadius = UDim.new(0, 8)
-            modeCorner.Parent = modeFrame
-            
-            local modeLabel = Instance.new("TextLabel")
-            modeLabel.Size = UDim2.new(0.5, 0, 1, 0)
-            modeLabel.Position = UDim2.new(0, 12, 0, 0)
-            modeLabel.Text = "📐 MODE ESP"
-            modeLabel.TextColor3 = Color3.fromRGB(240, 242, 250)
-            modeLabel.BackgroundTransparency = 1
-            modeLabel.Font = Enum.Font.Gotham
-            modeLabel.TextSize = 13
-            modeLabel.TextXAlignment = Enum.TextXAlignment.Left
-            modeLabel.Parent = modeFrame
-            
-            local modeValue = Instance.new("TextLabel")
-            modeValue.Size = UDim2.new(0.4, 0, 1, 0)
-            modeValue.Position = UDim2.new(0.55, 0, 0, 0)
-            modeValue.Text = espMode == "box" and "📦 BOX" or "📏 TRACER"
-            modeValue.TextColor3 = Color3.fromRGB(155, 0, 255)
-            modeValue.BackgroundTransparency = 1
-            modeValue.Font = Enum.Font.GothamBold
-            modeValue.TextSize = 13
-            modeValue.TextXAlignment = Enum.TextXAlignment.Right
-            modeValue.Parent = modeFrame
-            
-            local modeBtn = Instance.new("TextButton")
-            modeBtn.Size = UDim2.new(1, 0, 1, 0)
-            modeBtn.Text = ""
-            modeBtn.BackgroundTransparency = 1
-            modeBtn.Parent = modeFrame
-            
-            modeBtn.MouseButton1Click:Connect(function()
-                if espMode == "box" then
-                    SwitchMode("tracer")
-                    modeValue.Text = "📏 TRACER"
-                else
-                    SwitchMode("box")
-                    modeValue.Text = "📦 BOX"
-                end
-            end)
-            
-            -- Ketebalan garis
-            local thickFrame = Instance.new("Frame")
-            thickFrame.Size = UDim2.new(1, 0, 0, 40)
-            thickFrame.Position = UDim2.new(0, 0, 0, 140)
-            thickFrame.BackgroundColor3 = Color3.fromRGB(34, 37, 48)
-            thickFrame.BackgroundTransparency = 0.5
-            thickFrame.BorderSizePixel = 0
-            thickFrame.Parent = espFrame
-            
-            local thickCorner = Instance.new("UICorner")
-            thickCorner.CornerRadius = UDim.new(0, 8)
-            thickCorner.Parent = thickFrame
-            
-            local thickLabel = Instance.new("TextLabel")
-            thickLabel.Size = UDim2.new(0.5, 0, 1, 0)
-            thickLabel.Position = UDim2.new(0, 12, 0, 0)
-            thickLabel.Text = "📏 KETEBALAN"
-            thickLabel.TextColor3 = Color3.fromRGB(240, 242, 250)
-            thickLabel.BackgroundTransparency = 1
-            thickLabel.Font = Enum.Font.Gotham
-            thickLabel.TextSize = 13
-            thickLabel.TextXAlignment = Enum.TextXAlignment.Left
-            thickLabel.Parent = thickFrame
-            
-            local thickValue = Instance.new("TextLabel")
-            thickValue.Size = UDim2.new(0.3, 0, 1, 0)
-            thickValue.Position = UDim2.new(0.6, 0, 0, 0)
-            thickValue.Text = tostring(espThickness)
-            thickValue.TextColor3 = Color3.fromRGB(155, 0, 255)
-            thickValue.BackgroundTransparency = 1
-            thickValue.Font = Enum.Font.GothamBold
-            thickValue.TextSize = 13
-            thickValue.TextXAlignment = Enum.TextXAlignment.Right
-            thickValue.Parent = thickFrame
-            
-            local minusBtn = Instance.new("TextButton")
-            minusBtn.Size = UDim2.new(0, 30, 0, 30)
-            minusBtn.Position = UDim2.new(1, -70, 0.5, -15)
-            minusBtn.Text = "-"
-            minusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            minusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-            minusBtn.Font = Enum.Font.GothamBold
-            minusBtn.TextSize = 16
-            minusBtn.Parent = thickFrame
-            
-            local plusBtn = Instance.new("TextButton")
-            plusBtn.Size = UDim2.new(0, 30, 0, 30)
-            plusBtn.Position = UDim2.new(1, -35, 0.5, -15)
-            plusBtn.Text = "+"
-            plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            plusBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-            plusBtn.Font = Enum.Font.GothamBold
-            plusBtn.TextSize = 16
-            plusBtn.Parent = thickFrame
-            
-            local thickCorner2 = Instance.new("UICorner")
-            thickCorner2.CornerRadius = UDim.new(0, 6)
-            thickCorner2.Parent = minusBtn
-            
-            local thickCorner3 = Instance.new("UICorner")
-            thickCorner3.CornerRadius = UDim.new(0, 6)
-            thickCorner3.Parent = plusBtn
-            
-            minusBtn.MouseButton1Click:Connect(function()
-                espThickness = math.max(1, espThickness - 1)
-                thickValue.Text = tostring(espThickness)
-                RefreshESP()
-            end)
-            
-            plusBtn.MouseButton1Click:Connect(function()
-                espThickness = math.min(5, espThickness + 1)
-                thickValue.Text = tostring(espThickness)
-                RefreshESP()
-            end)
-            
-        elseif activeCategory == "color" then
-            -- ========== WARNA SETTINGS ==========
-            local colorFrame = Instance.new("Frame")
-            colorFrame.Size = UDim2.new(1, -20, 1, -20)
-            colorFrame.Position = UDim2.new(0, 10, 0, 10)
-            colorFrame.BackgroundTransparency = 1
-            colorFrame.Parent = rightPanel
-            
-            local titleLabel = Instance.new("TextLabel")
-            titleLabel.Size = UDim2.new(1, 0, 0, 30)
-            titleLabel.Text = "🎨 PENGATURAN WARNA"
-            titleLabel.TextColor3 = Color3.fromRGB(155, 0, 255)
-            titleLabel.BackgroundTransparency = 1
-            titleLabel.Font = Enum.Font.GothamBold
-            titleLabel.TextSize = 14
-            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-            titleLabel.Parent = colorFrame
-            
-            -- Pilihan warna preset
-            local colors = {
-                {name = "UNGU NEON", color = Color3.fromRGB(155, 0, 255), rgb = "155,0,255"},
-                {name = "MERAH", color = Color3.fromRGB(255, 0, 0), rgb = "255,0,0"},
-                {name = "HIJAU", color = Color3.fromRGB(0, 255, 0), rgb = "0,255,0"},
-                {name = "BIRU", color = Color3.fromRGB(0, 100, 255), rgb = "0,100,255"},
-                {name = "KUNING", color = Color3.fromRGB(255, 200, 0), rgb = "255,200,0"},
-                {name = "PUTIH", color = Color3.fromRGB(255, 255, 255), rgb = "255,255,255"},
-            }
-            
-            local yOffset = 45
-            for _, col in ipairs(colors) do
-                local colorBtn = Instance.new("TextButton")
-                colorBtn.Size = UDim2.new(1, 0, 0, 38)
-                colorBtn.Position = UDim2.new(0, 0, 0, yOffset)
-                colorBtn.Text = "🎨 " .. col.name
-                colorBtn.TextColor3 = Color3.fromRGB(240, 242, 250)
-                colorBtn.BackgroundColor3 = col.color
-                colorBtn.BackgroundTransparency = 0.7
-                colorBtn.Font = Enum.Font.Gotham
-                colorBtn.TextSize = 13
-                colorBtn.TextXAlignment = Enum.TextXAlignment.Left
-                colorBtn.Parent = colorFrame
-                
-                local btnCorner = Instance.new("UICorner")
-                btnCorner.CornerRadius = UDim.new(0, 8)
-                btnCorner.Parent = colorBtn
-                
-                colorBtn.MouseButton1Click:Connect(function()
-                    espColor = col.color
-                    RefreshESP()
-                    -- Update indicator
-                    for _, child in ipairs(colorFrame:GetChildren()) do
-                        if child:IsA("TextButton") then
-                            child.BackgroundTransparency = 0.7
-                        end
-                    end
-                    colorBtn.BackgroundTransparency = 0.3
-                end)
-                
-                yOffset = yOffset + 45
-            end
-            
-        elseif activeCategory == "settings" then
-            -- ========== SETTINGS UMUM ==========
-            local settingFrame = Instance.new("Frame")
-            settingFrame.Size = UDim2.new(1, -20, 1, -20)
-            settingFrame.Position = UDim2.new(0, 10, 0, 10)
-            settingFrame.BackgroundTransparency = 1
-            settingFrame.Parent = rightPanel
-            
-            local titleLabel = Instance.new("TextLabel")
-            titleLabel.Size = UDim2.new(1, 0, 0, 30)
-            titleLabel.Text = "⚙ PENGATURAN UMUM"
-            titleLabel.TextColor3 = Color3.fromRGB(155, 0, 255)
-            titleLabel.BackgroundTransparency = 1
-            titleLabel.Font = Enum.Font.GothamBold
-            titleLabel.TextSize = 14
-            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-            titleLabel.Parent = settingFrame
-            
-            -- Transparansi slider
-            local transFrame = Instance.new("Frame")
-            transFrame.Size = UDim2.new(1, 0, 0, 50)
-            transFrame.Position = UDim2.new(0, 0, 0, 45)
-            transFrame.BackgroundColor3 = Color3.fromRGB(34, 37, 48)
-            transFrame.BackgroundTransparency = 0.5
-            transFrame.BorderSizePixel = 0
-            transFrame.Parent = settingFrame
-            
-            local transCorner = Instance.new("UICorner")
-            transCorner.CornerRadius = UDim.new(0, 8)
-            transCorner.Parent = transFrame
-            
-            local transLabel = Instance.new("TextLabel")
-            transLabel.Size = UDim2.new(0.6, 0, 0.5, 0)
-            transLabel.Position = UDim2.new(0, 12, 0, 5)
-            transLabel.Text = "🔮 TRANSPARANSI"
-            transLabel.TextColor3 = Color3.fromRGB(240, 242, 250)
-            transLabel.BackgroundTransparency = 1
-            transLabel.Font = Enum.Font.GothamBold
-            transLabel.TextSize = 12
-            transLabel.TextXAlignment = Enum.TextXAlignment.Left
-            transLabel.Parent = transFrame
-            
-            local transValue = Instance.new("TextLabel")
-            transValue.Size = UDim2.new(0.3, 0, 0.5, 0)
-            transValue.Position = UDim2.new(0.6, 0, 0, 5)
-            transValue.Text = math.floor(espTransparency * 100) .. "%"
-            transValue.TextColor3 = Color3.fromRGB(155, 0, 255)
-            transValue.BackgroundTransparency = 1
-            transValue.Font = Enum.Font.GothamBold
-            transValue.TextSize = 12
-            transValue.TextXAlignment = Enum.TextXAlignment.Right
-            transValue.Parent = transFrame
-            
-            local slider = Instance.new("Frame")
-            slider.Size = UDim2.new(0.8, 0, 0, 4)
-            slider.Position = UDim2.new(0.1, 0, 0.7, 0)
-            slider.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-            slider.BorderSizePixel = 0
-            slider.Parent = transFrame
-            
-            local sliderFill = Instance.new("Frame")
-            sliderFill.Size = UDim2.new(espTransparency, 0, 1, 0)
-            sliderFill.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
-            sliderFill.BorderSizePixel = 0
-            sliderFill.Parent = slider
-            
-            local sliderCorner = Instance.new("UICorner")
-            sliderCorner.CornerRadius = UDim.new(1, 0)
-            sliderCorner.Parent = slider
-            
-            local sliderFillCorner = Instance.new("UICorner")
-            sliderFillCorner.CornerRadius = UDim.new(1, 0)
-            sliderFillCorner.Parent = sliderFill
-            
-            -- Slider drag (sederhana)
-            local sliderBtn = Instance.new("TextButton")
-            sliderBtn.Size = UDim2.new(0, 0, 1, 0)
-            sliderBtn.Text = ""
-            sliderBtn.BackgroundTransparency = 1
-            sliderBtn.Parent = transFrame
-            
-            local function updateTransparency(value)
-                espTransparency = math.clamp(value, 0, 1)
-                transValue.Text = math.floor(espTransparency * 100) .. "%"
-                sliderFill.Size = UDim2.new(espTransparency, 0, 1, 0)
-                RefreshESP()
-            end
-            
-            -- Info
-            local infoLabel = Instance.new("TextLabel")
-            infoLabel.Size = UDim2.new(1, 0, 0, 30)
-            infoLabel.Position = UDim2.new(0, 0, 0, 110)
-            infoLabel.Text = "💡 ZEFF VORTEX | Private Script"
-            infoLabel.TextColor3 = Color3.fromRGB(100, 100, 120)
-            infoLabel.BackgroundTransparency = 1
-            infoLabel.Font = Enum.Font.Gotham
-            infoLabel.TextSize = 10
-            infoLabel.TextXAlignment = Enum.TextXAlignment.Center
-            infoLabel.Parent = settingFrame
-        end
-    end
-    
-    -- Buat tombol kategori di kiri
-    local yOffset = 10
-    for _, cat in ipairs(categories) do
-        local catBtn = Instance.new("TextButton")
-        catBtn.Size = UDim2.new(0.9, 0, 0, 45)
-        catBtn.Position = UDim2.new(0.05, 0, 0, yOffset)
-        catBtn.Text = cat.name
-        catBtn.TextColor3 = Color3.fromRGB(240, 242, 250)
-        catBtn.BackgroundColor3 = cat.id == activeCategory and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(34, 37, 48)
-        catBtn.BackgroundTransparency = cat.id == activeCategory and 0.2 or 0.5
-        catBtn.Font = Enum.Font.Gotham
-        catBtn.TextSize = 13
-        catBtn.Parent = leftPanel
+        local colorCorner = Instance.new("UICorner")
+        colorCorner.CornerRadius = UDim.new(0, 6)
+        colorCorner.Parent = colorBtn
         
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 8)
-        btnCorner.Parent = catBtn
-        
-        categoryButtons[cat.id] = catBtn
-        
-        catBtn.MouseButton1Click:Connect(function()
-            activeCategory = cat.id
-            for id, btn in pairs(categoryButtons) do
-                if id == activeCategory then
-                    btn.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
-                    btn.BackgroundTransparency = 0.2
-                else
-                    btn.BackgroundColor3 = Color3.fromRGB(34, 37, 48)
-                    btn.BackgroundTransparency = 0.5
-                end
-            end
-            updateRightPanel()
+        colorBtn.MouseButton1Click:Connect(function()
+            espColor = colorValues[name]
+            RefreshESP()
         end)
         
-        yOffset = yOffset + 55
+        xPos = xPos + 0.2
     end
     
-    -- Initial load
-    updateRightPanel()
+    yOffset = yOffset + 45
     
-    -- ========== DRAG FUNCTION ==========
+    -- Footer info
+    local footer = Instance.new("TextLabel")
+    footer.Size = UDim2.new(1, 0, 0, 25)
+    footer.Position = UDim2.new(0, 0, 0, yOffset)
+    footer.Text = "💜 ZEFF VORTEX | Private Script"
+    footer.TextColor3 = Color3.fromRGB(100, 100, 130)
+    footer.BackgroundTransparency = 1
+    footer.Font = Enum.Font.Gotham
+    footer.TextSize = 10
+    footer.TextXAlignment = Enum.TextXAlignment.Center
+    footer.Parent = content
+    
+    yOffset = yOffset + 35
+    content.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
+    
+    -- ========== DRAG ==========
     local dragging = false
     local dragStart = nil
     local startPos = nil
@@ -909,18 +682,16 @@ local function CreateMainMenu()
         end
     end)
     
-    -- ========== MINIMIZE (ukuran lebih kecil) ==========
+    -- ========== MINIMIZE ==========
     local function ToggleMinimize()
         if minimized then
-            mainFrame:TweenSize(UDim2.new(0, 520, 0, 340), "Out", "Quad", 0.2, true)
-            leftPanel.Visible = true
-            rightPanel.Visible = true
+            mainFrame:TweenSize(UDim2.new(0, 320, 0, 420), "Out", "Quad", 0.2, true)
+            content.Visible = true
             minBtn.Text = "─"
             minimized = false
         else
-            mainFrame:TweenSize(UDim2.new(0, 200, 0, 42), "Out", "Quad", 0.2, true)
-            leftPanel.Visible = false
-            rightPanel.Visible = false
+            mainFrame:TweenSize(UDim2.new(0, 160, 0, 42), "Out", "Quad", 0.2, true)
+            content.Visible = false
             minBtn.Text = "□"
             minimized = true
         end

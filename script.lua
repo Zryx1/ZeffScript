@@ -1,6 +1,7 @@
 -- ============================================
--- ZEFF VORTEX - FULL SCRIPT
--- FITUR: ESP + MULTI HIT + MULTI DAMAGE + SPEED + JUMP
+-- ZEFF VORTEX - FINAL SCRIPT
+-- TOMBOL PEDANG (BISA DIGESER, ON/OFF)
+-- 3 TAB: ESP, COMBAT, MOVE
 -- ============================================
 
 -- ============================================
@@ -9,14 +10,22 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+
+-- Variabel UI
+local mainGui = nil
+local swordButton = nil
+local menuFrame = nil
+local isMenuOpen = false
+local isSwordEnabled = true
 
 -- Tab aktif
 local activeTab = "esp"
 
 -- ============================================
--- ESP VARIABEL (DARI SEBELUMNYA)
+-- ESP VARIABEL
 -- ============================================
 local masterEnabled = false
 local espBoxEnabled = false
@@ -27,55 +36,58 @@ local espThickness = 2
 local espList = {}
 
 -- ============================================
--- MULTI HIT VARIABEL
+-- COMBAT VARIABEL
 -- ============================================
 local multiHitEnabled = false
-local multiHitRange = 25  -- meter, max 25
-local multiHitTargets = 25  -- max 25 target
-
--- ============================================
--- MULTI DAMAGE VARIABEL
--- ============================================
+local multiHitRange = 25
+local multiHitTargets = 25
 local multiDamageEnabled = false
-local multiDamageMultiplier = 1  -- max 50x
+local multiDamageMultiplier = 1
 
 -- ============================================
--- SPEED & JUMP VARIABEL
+-- MOVE VARIABEL
 -- ============================================
 local speedEnabled = false
-local speedValue = 16  -- default 16, max 100
+local speedValue = 16
 local jumpEnabled = false
-local jumpValue = 50  -- default 50, max 100
-
+local jumpValue = 50
 local originalWalkSpeed = 16
 local originalJumpPower = 50
 
 -- ============================================
--- UI PEDANG MELAYANG
+-- CREATE MAIN GUI
 -- ============================================
-local swordGui = nil
-local swordOpen = true
-
-local function CreateSwordUI()
-    if swordGui then swordGui:Destroy() end
+local function CreateMainGUI()
+    if mainGui then mainGui:Destroy() end
     
     local CoreGui = game:GetService("CoreGui")
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "ZeffSwordUI"
-    screenGui.Parent = (gethui and gethui()) or CoreGui
+    mainGui = Instance.new("ScreenGui")
+    mainGui.Name = "ZeffVortexGUI"
+    mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Frame berbentuk pedang (posisi kanan bawah)
-    local swordFrame = Instance.new("Frame")
-    swordFrame.Size = UDim2.new(0, 60, 0, 60)
-    swordFrame.Position = UDim2.new(1, -75, 1, -160)
-    swordFrame.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
-    swordFrame.BackgroundTransparency = 0.15
-    swordFrame.BorderSizePixel = 0
-    swordFrame.Parent = screenGui
+    local success = pcall(function()
+        mainGui.Parent = (gethui and gethui()) or CoreGui
+    end)
+    if not success then
+        mainGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    end
     
+    -- ========== TOMBOL PEDANG (BISA DIGESER) ==========
+    swordButton = Instance.new("ImageButton")
+    swordButton.Size = UDim2.new(0, 50, 0, 50)
+    swordButton.Position = UDim2.new(1, -65, 1, -180)
+    swordButton.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
+    swordButton.BackgroundTransparency = 0.15
+    swordButton.BorderSizePixel = 0
+    swordButton.Image = "rbxassetid://3926305904" -- Efek glow
+    swordButton.ImageColor3 = Color3.fromRGB(155, 0, 255)
+    swordButton.ImageTransparency = 0.3
+    swordButton.Parent = mainGui
+    
+    -- Sudut tombol
     local swordCorner = Instance.new("UICorner")
-    swordCorner.CornerRadius = UDim.new(0, 30)
-    swordCorner.Parent = swordFrame
+    swordCorner.CornerRadius = UDim.new(0, 25)
+    swordCorner.Parent = swordButton
     
     -- Icon pedang
     local swordIcon = Instance.new("TextLabel")
@@ -84,18 +96,30 @@ local function CreateSwordUI()
     swordIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
     swordIcon.BackgroundTransparency = 1
     swordIcon.Font = Enum.Font.GothamBold
-    swordIcon.TextSize = 35
-    swordIcon.Parent = swordFrame
+    swordIcon.TextSize = 28
+    swordIcon.Parent = swordButton
     
-    -- Menu yang muncul saat pedang diklik
-    local menuFrame = Instance.new("Frame")
-    menuFrame.Size = UDim2.new(0, 320, 0, 450)
-    menuFrame.Position = UDim2.new(1, -340, 0.5, -225)
+    -- Status ON/OFF indicator
+    local statusDot = Instance.new("Frame")
+    statusDot.Size = UDim2.new(0, 10, 0, 10)
+    statusDot.Position = UDim2.new(1, -12, 1, -12)
+    statusDot.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    statusDot.BorderSizePixel = 0
+    statusDot.Parent = swordButton
+    
+    local dotCorner = Instance.new("UICorner")
+    dotCorner.CornerRadius = UDim.new(1, 0)
+    dotCorner.Parent = statusDot
+    
+    -- ========== MENU UTAMA ==========
+    menuFrame = Instance.new("Frame")
+    menuFrame.Size = UDim2.new(0, 320, 0, 420)
+    menuFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
     menuFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
     menuFrame.BackgroundTransparency = 0
     menuFrame.BorderSizePixel = 0
     menuFrame.Visible = false
-    menuFrame.Parent = screenGui
+    menuFrame.Parent = mainGui
     
     local menuCorner = Instance.new("UICorner")
     menuCorner.CornerRadius = UDim.new(0, 12)
@@ -120,7 +144,7 @@ local function CreateSwordUI()
     headerCorner.Parent = header
     
     local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(0.7, 0, 1, 0)
+    title.Size = UDim2.new(0.6, 0, 1, 0)
     title.Position = UDim2.new(0.03, 0, 0, 0)
     title.Text = "⚔️ ZEFF VORTEX"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -130,6 +154,7 @@ local function CreateSwordUI()
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Parent = header
     
+    -- Close menu button
     local closeMenuBtn = Instance.new("TextButton")
     closeMenuBtn.Size = UDim2.new(0, 28, 0, 28)
     closeMenuBtn.Position = UDim2.new(1, -36, 0.5, -14)
@@ -140,7 +165,7 @@ local function CreateSwordUI()
     closeMenuBtn.TextSize = 14
     closeMenuBtn.Parent = header
     
-    -- TAB BUTTONS (3 kategori)
+    -- TAB BUTTONS
     local tabBar = Instance.new("Frame")
     tabBar.Size = UDim2.new(1, -20, 0, 35)
     tabBar.Position = UDim2.new(0, 10, 0, 48)
@@ -187,65 +212,57 @@ local function CreateSwordUI()
     contentArea.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
     contentArea.Parent = menuFrame
     
-    -- ============================================
-    -- TAB 1: ESP (dari script sebelumnya)
-    -- ============================================
+    -- ========== TAB CONTENT ==========
+    -- ESP CONTENT
     local espContent = Instance.new("Frame")
     espContent.Size = UDim2.new(1, 0, 1, 0)
     espContent.BackgroundTransparency = 1
     espContent.Visible = true
     espContent.Parent = contentArea
     
-    local yEsp = 0
+    local yEsp = 5
     
     -- Master ESP
-    local masterBtn = CreateButton(espContent, "🔘 MASTER ESP", yEsp, masterEnabled)
-    local masterStatus = CreateStatus(espContent, yEsp, masterEnabled)
+    local masterBtn, masterStatus = CreateToggleButton(espContent, "🔘 MASTER ESP", yEsp, masterEnabled)
     yEsp = yEsp + 48
     
     -- Box ESP
-    local boxBtn = CreateButton(espContent, "📦 BOX ESP", yEsp, espBoxEnabled)
-    local boxStatus = CreateStatus(espContent, yEsp, espBoxEnabled)
+    local boxBtn, boxStatus = CreateToggleButton(espContent, "📦 BOX ESP", yEsp, espBoxEnabled)
     yEsp = yEsp + 43
     
     -- Tracer ESP
-    local tracerBtn = CreateButton(espContent, "📏 TRACER ESP", yEsp, espTracerEnabled)
-    local tracerStatus = CreateStatus(espContent, yEsp, espTracerEnabled)
+    local tracerBtn, tracerStatus = CreateToggleButton(espContent, "📏 TRACER ESP", yEsp, espTracerEnabled)
     yEsp = yEsp + 43
     
     -- Name ESP
-    local nameBtn = CreateButton(espContent, "🏷️ NAME ESP", yEsp, espNameEnabled)
-    local nameStatus = CreateStatus(espContent, yEsp, espNameEnabled)
+    local nameBtn, nameStatus = CreateToggleButton(espContent, "🏷️ NAME ESP", yEsp, espNameEnabled)
     yEsp = yEsp + 43
     
     -- Ketebalan
-    local thickFrame = CreateThicknessControl(espContent, yEsp, espThickness)
+    local thickControl = CreateSliderControl(espContent, "📏 KETEBALAN", yEsp, espThickness, 1, 5)
     yEsp = yEsp + 55
     
     espContent.CanvasSize = UDim2.new(0, 0, 0, yEsp + 10)
     
-    -- ============================================
-    -- TAB 2: COMBAT (Multi Hit + Multi Damage)
-    -- ============================================
+    -- COMBAT CONTENT
     local combatContent = Instance.new("Frame")
     combatContent.Size = UDim2.new(1, 0, 1, 0)
     combatContent.BackgroundTransparency = 1
     combatContent.Visible = false
     combatContent.Parent = contentArea
     
-    local yCombat = 0
+    local yCombat = 5
     
-    -- Multi Hit Toggle
-    local mhBtn = CreateButton(combatContent, "⚔️ MULTI HIT", yCombat, multiHitEnabled)
-    local mhStatus = CreateStatus(combatContent, yCombat, multiHitEnabled)
+    -- Multi Hit
+    local mhBtn, mhStatus = CreateToggleButton(combatContent, "⚔️ MULTI HIT", yCombat, multiHitEnabled)
     yCombat = yCombat + 48
     
     -- Range slider
-    local rangeFrame = CreateSliderControl(combatContent, "📏 JARAK (M)", yCombat, multiHitRange, 5, 25)
+    local rangeControl = CreateSliderControl(combatContent, "📏 JARAK (M)", yCombat, multiHitRange, 5, 25)
     yCombat = yCombat + 55
     
     -- Targets slider
-    local targetFrame = CreateSliderControl(combatContent, "🎯 TARGET", yCombat, multiHitTargets, 1, 25)
+    local targetControl = CreateSliderControl(combatContent, "🎯 TARGET", yCombat, multiHitTargets, 1, 25)
     yCombat = yCombat + 55
     
     -- Separator
@@ -256,35 +273,31 @@ local function CreateSwordUI()
     line.Parent = combatContent
     yCombat = yCombat + 15
     
-    -- Multi Damage Toggle
-    local mdBtn = CreateButton(combatContent, "💥 MULTI DAMAGE", yCombat, multiDamageEnabled)
-    local mdStatus = CreateStatus(combatContent, yCombat, multiDamageEnabled)
+    -- Multi Damage
+    local mdBtn, mdStatus = CreateToggleButton(combatContent, "💥 MULTI DAMAGE", yCombat, multiDamageEnabled)
     yCombat = yCombat + 48
     
     -- Damage multiplier slider
-    local damageFrame = CreateSliderControl(combatContent, "✖️ DAMAGE (x)", yCombat, multiDamageMultiplier, 1, 50)
+    local damageControl = CreateSliderControl(combatContent, "✖️ DAMAGE (x)", yCombat, multiDamageMultiplier, 1, 50)
     yCombat = yCombat + 55
     
     combatContent.CanvasSize = UDim2.new(0, 0, 0, yCombat + 10)
     
-    -- ============================================
-    -- TAB 3: MOVE (Speed + Jump)
-    -- ============================================
+    -- MOVE CONTENT
     local moveContent = Instance.new("Frame")
     moveContent.Size = UDim2.new(1, 0, 1, 0)
     moveContent.BackgroundTransparency = 1
     moveContent.Visible = false
     moveContent.Parent = contentArea
     
-    local yMove = 0
+    local yMove = 5
     
     -- Speed Toggle
-    local speedBtn = CreateButton(moveContent, "⚡ SPEED HACK", yMove, speedEnabled)
-    local speedStatus = CreateStatus(moveContent, yMove, speedEnabled)
+    local speedBtn, speedStatus = CreateToggleButton(moveContent, "⚡ SPEED HACK", yMove, speedEnabled)
     yMove = yMove + 48
     
     -- Speed slider
-    local speedSlider = CreateSliderControl(moveContent, "🏃 KECEPATAN", yMove, speedValue, 16, 100)
+    local speedControl = CreateSliderControl(moveContent, "🏃 KECEPATAN", yMove, speedValue, 16, 100)
     yMove = yMove + 55
     
     -- Separator
@@ -296,21 +309,17 @@ local function CreateSwordUI()
     yMove = yMove + 15
     
     -- Jump Toggle
-    local jumpBtn = CreateButton(moveContent, "🦘 JUMP HACK", yMove, jumpEnabled)
-    local jumpStatus = CreateStatus(moveContent, yMove, jumpEnabled)
+    local jumpBtn, jumpStatus = CreateToggleButton(moveContent, "🦘 JUMP HACK", yMove, jumpEnabled)
     yMove = yMove + 48
     
     -- Jump slider
-    local jumpSlider = CreateSliderControl(moveContent, "📈 KETINGGIAN", yMove, jumpValue, 50, 100)
+    local jumpControl = CreateSliderControl(moveContent, "📈 KETINGGIAN", yMove, jumpValue, 50, 100)
     yMove = yMove + 55
     
     moveContent.CanvasSize = UDim2.new(0, 0, 0, yMove + 10)
     
-    -- ============================================
-    -- FUNGSI CREATE UI
-    -- ============================================
-    
-    function CreateButton(parent, text, yPos, state)
+    -- ========== FUNGSI CREATE UI ==========
+    function CreateToggleButton(parent, text, yPos, state)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, 38)
         btn.Position = UDim2.new(0, 0, 0, yPos)
@@ -320,33 +329,28 @@ local function CreateSwordUI()
         btn.Font = Enum.Font.GothamBold
         btn.TextSize = 13
         btn.TextXAlignment = Enum.TextXAlignment.Left
-        btn.TextXAlignment = Enum.TextXAlignment.Left
         btn.Parent = parent
         
         local btnCorner = Instance.new("UICorner")
         btnCorner.CornerRadius = UDim.new(0, 8)
         btnCorner.Parent = btn
         
-        -- Padding kiri
         local padding = Instance.new("UIPadding")
         padding.PaddingLeft = UDim.new(0, 12)
         padding.Parent = btn
         
-        return btn
-    end
-    
-    function CreateStatus(parent, yPos, state)
         local status = Instance.new("TextLabel")
-        status.Size = UDim2.new(0.35, 0, 0, 38)
-        status.Position = UDim2.new(0.65, 0, 0, yPos)
+        status.Size = UDim2.new(0.35, 0, 1, 0)
+        status.Position = UDim2.new(0.65, 0, 0, 0)
         status.Text = state and "✅ ON" or "❌ OFF"
         status.TextColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
         status.BackgroundTransparency = 1
         status.Font = Enum.Font.GothamBold
         status.TextSize = 12
         status.TextXAlignment = Enum.TextXAlignment.Right
-        status.Parent = parent
-        return status
+        status.Parent = btn
+        
+        return btn, status
     end
     
     function CreateSliderControl(parent, label, yPos, value, minVal, maxVal)
@@ -412,76 +416,12 @@ local function CreateSwordUI()
         btnCorner2.CornerRadius = UDim.new(0, 6)
         btnCorner2.Parent = plus
         
-        return {frame = frame, valueText = valueText, minus = minus, plus = plus, min = minVal, max = maxVal, var = nil}
+        return {frame = frame, valueText = valueText, minus = minus, plus = plus, min = minVal, max = maxVal, value = value}
     end
     
-    function CreateThicknessControl(parent, yPos, value)
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, 0, 0, 45)
-        frame.Position = UDim2.new(0, 0, 0, yPos)
-        frame.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
-        frame.BackgroundTransparency = 0
-        frame.BorderSizePixel = 0
-        frame.Parent = parent
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 8)
-        corner.Parent = frame
-        
-        local labelText = Instance.new("TextLabel")
-        labelText.Size = UDim2.new(0.5, 0, 1, 0)
-        labelText.Position = UDim2.new(0, 10, 0, 0)
-        labelText.Text = "📏 KETEBALAN"
-        labelText.TextColor3 = Color3.fromRGB(200, 200, 220)
-        labelText.BackgroundTransparency = 1
-        labelText.Font = Enum.Font.GothamBold
-        labelText.TextSize = 11
-        labelText.TextXAlignment = Enum.TextXAlignment.Left
-        labelText.Parent = frame
-        
-        local valueText = Instance.new("TextLabel")
-        valueText.Size = UDim2.new(0.2, 0, 1, 0)
-        valueText.Position = UDim2.new(0.5, 0, 0, 0)
-        valueText.Text = tostring(value)
-        valueText.TextColor3 = Color3.fromRGB(155, 0, 255)
-        valueText.BackgroundTransparency = 1
-        valueText.Font = Enum.Font.GothamBold
-        valueText.TextSize = 12
-        valueText.TextXAlignment = Enum.TextXAlignment.Center
-        valueText.Parent = frame
-        
-        local minus = Instance.new("TextButton")
-        minus.Size = UDim2.new(0, 30, 0, 30)
-        minus.Position = UDim2.new(1, -70, 0.5, -15)
-        minus.Text = "-"
-        minus.TextColor3 = Color3.fromRGB(255, 255, 255)
-        minus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
-        minus.Font = Enum.Font.GothamBold
-        minus.TextSize = 16
-        minus.Parent = frame
-        
-        local plus = Instance.new("TextButton")
-        plus.Size = UDim2.new(0, 30, 0, 30)
-        plus.Position = UDim2.new(1, -35, 0.5, -15)
-        plus.Text = "+"
-        plus.TextColor3 = Color3.fromRGB(255, 255, 255)
-        plus.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
-        plus.Font = Enum.Font.GothamBold
-        plus.TextSize = 16
-        plus.Parent = frame
-        
-        local btnCorner1 = Instance.new("UICorner")
-        btnCorner1.CornerRadius = UDim.new(0, 6)
-        btnCorner1.Parent = minus
-        
-        local btnCorner2 = Instance.new("UICorner")
-        btnCorner2.CornerRadius = UDim.new(0, 6)
-        btnCorner2.Parent = plus
-        
-        return {frame = frame, valueText = valueText, minus = minus, plus = plus}
-    end
+    -- ========== BUTTON ACTIONS ==========
     
-    -- SWITCH TAB FUNCTION
+    -- Switch Tab
     local function SwitchTab(tab)
         activeTab = tab
         espTab.BackgroundColor3 = tab == "esp" and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
@@ -500,7 +440,7 @@ local function CreateSwordUI()
     combatTab.MouseButton1Click:Connect(function() SwitchTab("combat") end)
     moveTab.MouseButton1Click:Connect(function() SwitchTab("move") end)
     
-    -- BUTTON ACTIONS
+    -- ESP Buttons
     masterBtn.MouseButton1Click:Connect(function()
         masterEnabled = not masterEnabled
         masterStatus.Text = masterEnabled and "✅ ON" or "❌ OFF"
@@ -529,7 +469,7 @@ local function CreateSwordUI()
         nameBtn.BackgroundColor3 = espNameEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
     end)
     
-    -- Multi Hit
+    -- Combat Buttons
     mhBtn.MouseButton1Click:Connect(function()
         multiHitEnabled = not multiHitEnabled
         mhStatus.Text = multiHitEnabled and "✅ ON" or "❌ OFF"
@@ -537,7 +477,6 @@ local function CreateSwordUI()
         mhBtn.BackgroundColor3 = multiHitEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
     end)
     
-    -- Multi Damage
     mdBtn.MouseButton1Click:Connect(function()
         multiDamageEnabled = not multiDamageEnabled
         mdStatus.Text = multiDamageEnabled and "✅ ON" or "❌ OFF"
@@ -545,7 +484,7 @@ local function CreateSwordUI()
         mdBtn.BackgroundColor3 = multiDamageEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
     end)
     
-    -- Speed
+    -- Move Buttons
     speedBtn.MouseButton1Click:Connect(function()
         speedEnabled = not speedEnabled
         speedStatus.Text = speedEnabled and "✅ ON" or "❌ OFF"
@@ -554,7 +493,6 @@ local function CreateSwordUI()
         ApplySpeed()
     end)
     
-    -- Jump
     jumpBtn.MouseButton1Click:Connect(function()
         jumpEnabled = not jumpEnabled
         jumpStatus.Text = jumpEnabled and "✅ ON" or "❌ OFF"
@@ -563,62 +501,7 @@ local function CreateSwordUI()
         ApplyJump()
     end)
     
-    -- SLIDER ACTIONS
-    -- Range slider
-    rangeFrame.minus.MouseButton1Click:Connect(function()
-        multiHitRange = math.max(5, multiHitRange - 1)
-        rangeFrame.valueText.Text = tostring(multiHitRange)
-    end)
-    rangeFrame.plus.MouseButton1Click:Connect(function()
-        multiHitRange = math.min(25, multiHitRange + 1)
-        rangeFrame.valueText.Text = tostring(multiHitRange)
-    end)
-    
-    -- Target slider
-    targetFrame.minus.MouseButton1Click:Connect(function()
-        multiHitTargets = math.max(1, multiHitTargets - 1)
-        targetFrame.valueText.Text = tostring(multiHitTargets)
-    end)
-    targetFrame.plus.MouseButton1Click:Connect(function()
-        multiHitTargets = math.min(25, multiHitTargets + 1)
-        targetFrame.valueText.Text = tostring(multiHitTargets)
-    end)
-    
-    -- Damage slider
-    damageFrame.minus.MouseButton1Click:Connect(function()
-        multiDamageMultiplier = math.max(1, multiDamageMultiplier - 1)
-        damageFrame.valueText.Text = tostring(multiDamageMultiplier)
-    end)
-    damageFrame.plus.MouseButton1Click:Connect(function()
-        multiDamageMultiplier = math.min(50, multiDamageMultiplier + 1)
-        damageFrame.valueText.Text = tostring(multiDamageMultiplier)
-    end)
-    
-    -- Speed slider
-    speedSlider.minus.MouseButton1Click:Connect(function()
-        speedValue = math.max(16, speedValue - 1)
-        speedSlider.valueText.Text = tostring(speedValue)
-        ApplySpeed()
-    end)
-    speedSlider.plus.MouseButton1Click:Connect(function()
-        speedValue = math.min(100, speedValue + 1)
-        speedSlider.valueText.Text = tostring(speedValue)
-        ApplySpeed()
-    end)
-    
-    -- Jump slider
-    jumpSlider.minus.MouseButton1Click:Connect(function()
-        jumpValue = math.max(50, jumpValue - 1)
-        jumpSlider.valueText.Text = tostring(jumpValue)
-        ApplyJump()
-    end)
-    jumpSlider.plus.MouseButton1Click:Connect(function()
-        jumpValue = math.min(100, jumpValue + 1)
-        jumpSlider.valueText.Text = tostring(jumpValue)
-        ApplyJump()
-    end)
-    
-    -- Thickness slider
+    -- Slider Actions
     thickControl.minus.MouseButton1Click:Connect(function()
         espThickness = math.max(1, espThickness - 1)
         thickControl.valueText.Text = tostring(espThickness)
@@ -630,31 +513,65 @@ local function CreateSwordUI()
         RefreshESP()
     end)
     
-    -- TOGGLE MENU
-    local menuVisible = false
-    swordIcon.MouseButton1Click:Connect(function()
-        menuVisible = not menuVisible
-        menuFrame.Visible = menuVisible
-        if menuVisible then
-            menuFrame:TweenSize(UDim2.new(0, 320, 0, 450), "Out", "Quad", 0.2, true)
-        end
+    rangeControl.minus.MouseButton1Click:Connect(function()
+        multiHitRange = math.max(5, multiHitRange - 1)
+        rangeControl.valueText.Text = tostring(multiHitRange)
+    end)
+    rangeControl.plus.MouseButton1Click:Connect(function()
+        multiHitRange = math.min(25, multiHitRange + 1)
+        rangeControl.valueText.Text = tostring(multiHitRange)
     end)
     
-    closeMenuBtn.MouseButton1Click:Connect(function()
-        menuVisible = false
-        menuFrame.Visible = false
+    targetControl.minus.MouseButton1Click:Connect(function()
+        multiHitTargets = math.max(1, multiHitTargets - 1)
+        targetControl.valueText.Text = tostring(multiHitTargets)
+    end)
+    targetControl.plus.MouseButton1Click:Connect(function()
+        multiHitTargets = math.min(25, multiHitTargets + 1)
+        targetControl.valueText.Text = tostring(multiHitTargets)
     end)
     
-    -- DRAG MENU
+    damageControl.minus.MouseButton1Click:Connect(function()
+        multiDamageMultiplier = math.max(1, multiDamageMultiplier - 1)
+        damageControl.valueText.Text = tostring(multiDamageMultiplier)
+    end)
+    damageControl.plus.MouseButton1Click:Connect(function()
+        multiDamageMultiplier = math.min(50, multiDamageMultiplier + 1)
+        damageControl.valueText.Text = tostring(multiDamageMultiplier)
+    end)
+    
+    speedControl.minus.MouseButton1Click:Connect(function()
+        speedValue = math.max(16, speedValue - 1)
+        speedControl.valueText.Text = tostring(speedValue)
+        ApplySpeed()
+    end)
+    speedControl.plus.MouseButton1Click:Connect(function()
+        speedValue = math.min(100, speedValue + 1)
+        speedControl.valueText.Text = tostring(speedValue)
+        ApplySpeed()
+    end)
+    
+    jumpControl.minus.MouseButton1Click:Connect(function()
+        jumpValue = math.max(50, jumpValue - 1)
+        jumpControl.valueText.Text = tostring(jumpValue)
+        ApplyJump()
+    end)
+    jumpControl.plus.MouseButton1Click:Connect(function()
+        jumpValue = math.min(100, jumpValue + 1)
+        jumpControl.valueText.Text = tostring(jumpValue)
+        ApplyJump()
+    end)
+    
+    -- ========== TOMBOL PEDANG (BISA DIGESER) ==========
     local dragging = false
     local dragStart = nil
     local startPos = nil
     
-    header.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    swordButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
-            startPos = menuFrame.Position
+            startPos = swordButton.Position
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -665,20 +582,90 @@ local function CreateSwordUI()
     
     UserInputService.InputChanged:Connect(function(input)
         if not dragging then return end
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
+            local newX = math.clamp(startPos.X.Offset + delta.X, 0, UDim2.new(1, -60, 0, 0).X.Offset)
+            local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, UDim2.new(0, 0, 1, -60).Y.Offset)
+            swordButton.Position = UDim2.new(startPos.X.Scale, newX, startPos.Y.Scale, newY)
+        end
+    end)
+    
+    -- MENU DRAG
+    local menuDragging = false
+    local menuDragStart = nil
+    local menuStartPos = nil
+    
+    header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            menuDragging = true
+            menuDragStart = input.Position
+            menuStartPos = menuFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    menuDragging = false
+                end
+            end)
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if not menuDragging then return end
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - menuDragStart
             menuFrame.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+                menuStartPos.X.Scale, menuStartPos.X.Offset + delta.X,
+                menuStartPos.Y.Scale, menuStartPos.Y.Offset + delta.Y
             )
         end
     end)
     
-    return screenGui
+    -- Toggle menu ON/OFF
+    local function ToggleMenu()
+        isMenuOpen = not isMenuOpen
+        menuFrame.Visible = isMenuOpen
+        if isMenuOpen then
+            menuFrame:TweenSize(UDim2.new(0, 320, 0, 420), "Out", "Quad", 0.2, true)
+        end
+    end
+    
+    -- Tombol tutup menu
+    closeMenuBtn.MouseButton1Click:Connect(ToggleMenu)
+    
+    -- Tombol pedang untuk toggle menu
+    swordButton.MouseButton1Click:Connect(ToggleMenu)
+    
+    -- Tombol pedang untuk ON/OFF (tap lama) - optional
+    local pressTime = 0
+    swordButton.MouseButton1Down:Connect(function()
+        pressTime = tick()
+    end)
+    
+    swordButton.MouseButton1Up:Connect(function()
+        local duration = tick() - pressTime
+        if duration > 0.5 then
+            -- Tap lama: ON/OFF semua ESP
+            isSwordEnabled = not isSwordEnabled
+            if isSwordEnabled then
+                statusDot.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+                masterEnabled = true
+                masterStatus.Text = "✅ ON"
+                masterStatus.TextColor3 = Color3.fromRGB(0, 255, 0)
+                masterBtn.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
+            else
+                statusDot.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                masterEnabled = false
+                masterStatus.Text = "❌ OFF"
+                masterStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
+                masterBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+            end
+        end
+    end)
+    
+    return mainGui
 end
 
 -- ============================================
--- ESP FUNCTIONS (dari sebelumnya)
+-- ESP FUNCTIONS
 -- ============================================
 local function CreateESP(player)
     if player == LocalPlayer then return end
@@ -812,88 +799,23 @@ end
 -- SPEED & JUMP FUNCTIONS
 -- ============================================
 local function ApplySpeed()
-    if speedEnabled then
-        LocalPlayer.Character.Humanoid.WalkSpeed = speedValue
-    else
-        LocalPlayer.Character.Humanoid.WalkSpeed = originalWalkSpeed
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        if speedEnabled then
+            char.Humanoid.WalkSpeed = speedValue
+        else
+            char.Humanoid.WalkSpeed = originalWalkSpeed
+        end
     end
 end
 
 local function ApplyJump()
-    if jumpEnabled then
-        LocalPlayer.Character.Humanoid.JumpPower = jumpValue
-    else
-        LocalPlayer.Character.Humanoid.JumpPower = originalJumpPower
-    end
-end
-
--- ============================================
--- MULTI HIT FUNCTION
--- ============================================
-local function GetNearestTarget()
-    local closest = nil
-    local closestDist = multiHitRange
     local char = LocalPlayer.Character
-    if not char then return nil end
-    local rootPart = char:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return nil end
-    
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            local targetChar = player.Character
-            if targetChar then
-                local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
-                if targetRoot then
-                    local dist = (rootPart.Position - targetRoot.Position).Magnitude
-                    if dist < closestDist then
-                        closestDist = dist
-                        closest = player
-                    end
-                end
-            end
-        end
-    end
-    return closest
-end
-
--- ============================================
--- MULTI DAMAGE FUNCTION (Hook ke damage)
--- ============================================
-local function SetupDamageHook()
-    -- Hook ke damage event (contoh untuk game tertentu)
-    -- Generic approach: coba hook ke humanoid
-    local oldHealth = {}
-    
-    Players.PlayerAdded:Connect(function(player)
-        player.CharacterAdded:Connect(function(char)
-            local humanoid = char:WaitForChild("Humanoid")
-            oldHealth[player] = humanoid.Health
-            
-            humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-                if multiDamageEnabled and multiDamageMultiplier > 1 then
-                    local damage = oldHealth[player] - humanoid.Health
-                    if damage > 0 then
-                        -- Apply multiplier ke damage
-                        local newHealth = humanoid.Health - (damage * (multiDamageMultiplier - 1))
-                        humanoid.Health = newHealth
-                    end
-                end
-                oldHealth[player] = humanoid.Health
-            end)
-        end)
-    end)
-end
-
--- ============================================
--- MULTI HIT LOOP
--- ============================================
-local function MultiHitLoop()
-    while true do
-        wait(0.1)
-        if multiHitEnabled then
-            -- Ini adalah framework untuk multi hit
-            -- Implementasi spesifik tergantung game
-            -- Contoh: mencari tool dan mengaktifkannya ke multiple target
+    if char and char:FindFirstChild("Humanoid") then
+        if jumpEnabled then
+            char.Humanoid.JumpPower = jumpValue
+        else
+            char.Humanoid.JumpPower = originalJumpPower
         end
     end
 end
@@ -921,20 +843,15 @@ RunService.RenderStepped:Connect(UpdateAllESP)
 
 -- Speed & Jump character added
 LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid")
     wait(0.5)
     originalWalkSpeed = char.Humanoid.WalkSpeed
     originalJumpPower = char.Humanoid.JumpPower
-    if speedEnabled then ApplySpeed() end
-    if jumpEnabled then ApplyJump() end
+    ApplySpeed()
+    ApplyJump()
 end)
 
--- Setup damage hook
-SetupDamageHook()
-
--- Start multi hit loop
-coroutine.wrap(MultiHitLoop)()
-
 -- ============================================
--- CREATE UI
+-- START
 -- ============================================
-CreateSwordUI()
+CreateMainGUI()

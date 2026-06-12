@@ -1,6 +1,6 @@
 -- ========================================
--- VORTEX ULTIMATE - DELTA HP READY
--- RADIUS 100M | DAMAGE 999 | SPEED 999 | JUMP 999
+-- VORTEX BASIC - PASTI MUNCUL DI DELTA
+-- TANPA SCROLL, TANPA RIBET
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -10,20 +10,17 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- ========== VARIABEL ==========
--- ESP
 local masterESP = false
 local espBox = false
 local espTracer = false
 local espName = false
 local espThick = 2
 
--- MULTI HIT (SEMUA TARGET)
 local autoHit = false
-local hitRange = 100  -- MAX 100 METER
-local hitDamage = 999  -- DAMAGE 999
-local hitDelay = 0.01  -- 100 HIT PER DETIK
+local hitRange = 100
+local hitDamage = 999
+local hitDelay = 0.01
 
--- SPEED JUMP (MAX 999)
 local speedBoost = false
 local speedVal = 999
 local jumpBoost = false
@@ -113,15 +110,14 @@ local function RefreshESP()
     end
 end
 
--- ========== FUNGSI MULTI HIT (SEMUA TARGET DALAM RADIUS) ==========
-local function GetAllTargetsInRange()
+-- ========== FUNGSI MULTI HIT ==========
+local function GetAllTargets()
     local targets = {}
     local char = LocalPlayer.Character
     if not char then return targets end
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return targets end
     
-    -- SERANG SEMUA PLAYER LAIN
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer then
             local c = p.Character
@@ -137,57 +133,38 @@ local function GetAllTargetsInRange()
             end
         end
     end
-    
-    -- SERANG NPC / ENTITY LAIN (OPTIONAL)
-    local function scan(inst)
-        for _, child in ipairs(inst:GetChildren()) do
-            if child:IsA("Model") and child ~= char then
-                local h = child:FindFirstChild("Humanoid")
-                local r = child:FindFirstChild("HumanoidRootPart") or child:FindFirstChild("Head")
-                if r and h and h.Health > 0 then
-                    local dist = (root.Position - r.Position).Magnitude
-                    if dist <= hitRange then
-                        table.insert(targets, h)
-                    end
-                end
-            end
-            scan(child)
-        end
-    end
-    scan(workspace)
-    
     return targets
 end
 
 local function DoAutoHit()
     if not autoHit then return end
-    local targets = GetAllTargetsInRange()
+    local targets = GetAllTargets()
     for _, h in ipairs(targets) do
         h.Health = h.Health - hitDamage
     end
 end
 
 local function ManualAttack()
-    local targets = GetAllTargetsInRange()
+    local targets = GetAllTargets()
     if #targets > 0 then
         for _, h in ipairs(targets) do
             h.Health = h.Health - 999
         end
-        statusLabel.Text = "⚔️ DAMAGE 999 to " .. #targets .. " targets! ⚔️"
-        statusLabel.TextColor3 = Color3.fromRGB(0,255,0)
-        task.wait(0.5)
-        statusLabel.Text = "✅ VORTEX READY"
-        statusLabel.TextColor3 = Color3.fromRGB(0,255,0)
+        statusText.Text = "DAMAGE 999 KE " .. #targets .. " TARGET!"
+        statusText.TextColor3 = Color3.fromRGB(0,255,0)
+        wait(0.5)
+        statusText.Text = "READY"
+        statusText.TextColor3 = Color3.fromRGB(0,255,0)
     else
-        statusLabel.Text = "❌ TIDAK ADA TARGET"
-        statusLabel.TextColor3 = Color3.fromRGB(255,0,0)
-        task.wait(0.5)
-        statusLabel.Text = "✅ VORTEX READY"
-        statusLabel.TextColor3 = Color3.fromRGB(0,255,0)
+        statusText.Text = "TIDAK ADA TARGET!"
+        statusText.TextColor3 = Color3.fromRGB(255,0,0)
+        wait(0.5)
+        statusText.Text = "READY"
+        statusText.TextColor3 = Color3.fromRGB(0,255,0)
     end
 end
 
--- ========== SPEED JUMP MAX ==========
+-- ========== SPEED JUMP ==========
 local function ApplySpeed()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("Humanoid") then
@@ -202,45 +179,45 @@ local function ApplyJump()
     end
 end
 
--- ========== BUAT GUI ==========
+-- ========== BUAT GUI (MANUAL SEMUA, TANPA SCROLL) ==========
 local gui = Instance.new("ScreenGui")
-gui.Name = "VortexUltimate"
+gui.Name = "VortexBasic"
 gui.ResetOnSpawn = false
 gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- FRAME UTAMA
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 280, 0, 480)
-mainFrame.Position = UDim2.new(0.5, -140, 0.5, -240)
-mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
-mainFrame.BackgroundTransparency = 0
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = gui
+-- FRAME (LEBIH PANJANG BIAR SEMUA TOMBOL KELIHATAN)
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 260, 0, 550)
+frame.Position = UDim2.new(0.5, -130, 0.2, 0)
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+frame.BackgroundTransparency = 0
+frame.BorderSizePixel = 0
+frame.Parent = gui
 
-local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 12)
-frameCorner.Parent = mainFrame
+local fCorner = Instance.new("UICorner")
+fCorner.CornerRadius = UDim.new(0, 12)
+fCorner.Parent = frame
 
--- HEADER
+-- HEADER DRAG
 local header = Instance.new("Frame")
 header.Size = UDim2.new(1, 0, 0, 40)
 header.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
 header.BackgroundTransparency = 0
 header.BorderSizePixel = 0
-header.Parent = mainFrame
+header.Parent = frame
 
-local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 12)
-headerCorner.Parent = header
+local hCorner = Instance.new("UICorner")
+hCorner.CornerRadius = UDim.new(0, 12)
+hCorner.Parent = header
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.6, 0, 1, 0)
 title.Position = UDim2.new(0.05, 0, 0, 0)
-title.Text = "⚔️ VORTEX ULTIMATE"
+title.Text = "VORTEX ULTIMATE"
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
-title.TextSize = 13
+title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
@@ -264,281 +241,332 @@ closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 16
 closeBtn.Parent = header
 
--- SCROLLING FRAME
-local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, -16, 1, -55)
-scroll.Position = UDim2.new(0, 8, 0, 48)
-scroll.BackgroundTransparency = 1
-scroll.CanvasSize = UDim2.new(0, 0, 0, 520)
-scroll.ScrollBarThickness = 3
-scroll.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
-scroll.Parent = mainFrame
+-- ISI (LANGSUNG SEMUA, TANPA SCROLL)
+local y = 55
 
-local y = 5
-
--- ========== SECTION ESP ==========
+-- TITLE ESP
 local espTitle = Instance.new("TextLabel")
-espTitle.Size = UDim2.new(1, 0, 0, 28)
-espTitle.Position = UDim2.new(0, 0, 0, y)
-espTitle.Text = "--- 🎮 ESP MENU 🎮 ---"
+espTitle.Size = UDim2.new(1, -16, 0, 25)
+espTitle.Position = UDim2.new(0, 8, 0, y)
+espTitle.Text = "--- ESP MENU ---"
 espTitle.TextColor3 = Color3.fromRGB(155, 0, 255)
 espTitle.BackgroundTransparency = 1
 espTitle.Font = Enum.Font.GothamBold
 espTitle.TextSize = 12
-espTitle.Parent = scroll
-y = y + 30
+espTitle.Parent = frame
+y = y + 28
 
-local masterBtn = CreateSimpleButton(scroll, "MASTER ESP", y)
+-- MASTER ESP
+local masterBtn = Instance.new("TextButton")
+masterBtn.Size = UDim2.new(1, -16, 0, 38)
+masterBtn.Position = UDim2.new(0, 8, 0, y)
+masterBtn.Text = "MASTER ESP: OFF"
+masterBtn.TextColor3 = Color3.fromRGB(255,255,255)
+masterBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
+masterBtn.Font = Enum.Font.GothamBold
+masterBtn.TextSize = 13
+masterBtn.Parent = frame
+local mCorner = Instance.new("UICorner")
+mCorner.CornerRadius = UDim.new(0, 6)
+mCorner.Parent = masterBtn
 y = y + 42
-local boxBtn = CreateSimpleButton(scroll, "BOX ESP", y)
-y = y + 40
-local tracerBtn = CreateSimpleButton(scroll, "TRACER ESP", y)
-y = y + 40
-local nameBtn = CreateSimpleButton(scroll, "NAME ESP", y)
-y = y + 40
 
--- Ketebalan
+-- BOX ESP
+local boxBtn = Instance.new("TextButton")
+boxBtn.Size = UDim2.new(1, -16, 0, 38)
+boxBtn.Position = UDim2.new(0, 8, 0, y)
+boxBtn.Text = "BOX ESP: OFF"
+boxBtn.TextColor3 = Color3.fromRGB(255,255,255)
+boxBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
+boxBtn.Font = Enum.Font.GothamBold
+boxBtn.TextSize = 13
+boxBtn.Parent = frame
+local bCorner = Instance.new("UICorner")
+bCorner.CornerRadius = UDim.new(0, 6)
+bCorner.Parent = boxBtn
+y = y + 42
+
+-- TRACER ESP
+local tracerBtn = Instance.new("TextButton")
+tracerBtn.Size = UDim2.new(1, -16, 0, 38)
+tracerBtn.Position = UDim2.new(0, 8, 0, y)
+tracerBtn.Text = "TRACER ESP: OFF"
+tracerBtn.TextColor3 = Color3.fromRGB(255,255,255)
+tracerBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
+tracerBtn.Font = Enum.Font.GothamBold
+tracerBtn.TextSize = 13
+tracerBtn.Parent = frame
+local tCorner = Instance.new("UICorner")
+tCorner.CornerRadius = UDim.new(0, 6)
+tCorner.Parent = tracerBtn
+y = y + 42
+
+-- NAME ESP
+local nameBtn = Instance.new("TextButton")
+nameBtn.Size = UDim2.new(1, -16, 0, 38)
+nameBtn.Position = UDim2.new(0, 8, 0, y)
+nameBtn.Text = "NAME ESP: OFF"
+nameBtn.TextColor3 = Color3.fromRGB(255,255,255)
+nameBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
+nameBtn.Font = Enum.Font.GothamBold
+nameBtn.TextSize = 13
+nameBtn.Parent = frame
+local nCorner = Instance.new("UICorner")
+nCorner.CornerRadius = UDim.new(0, 6)
+nCorner.Parent = nameBtn
+y = y + 42
+
+-- KETEBALAN
+local thickFrame = Instance.new("Frame")
+thickFrame.Size = UDim2.new(1, -16, 0, 35)
+thickFrame.Position = UDim2.new(0, 8, 0, y)
+thickFrame.BackgroundColor3 = Color3.fromRGB(30,30,42)
+thickFrame.BackgroundTransparency = 0
+thickFrame.BorderSizePixel = 0
+thickFrame.Parent = frame
+local tkCorner = Instance.new("UICorner")
+tkCorner.CornerRadius = UDim.new(0, 6)
+tkCorner.Parent = thickFrame
+
 local thickLabel = Instance.new("TextLabel")
-thickLabel.Size = UDim2.new(0.5, 0, 0, 30)
-thickLabel.Position = UDim2.new(0, 0, 0, y)
+thickLabel.Size = UDim2.new(0.5, 0, 1, 0)
+thickLabel.Position = UDim2.new(0, 8, 0, 0)
 thickLabel.Text = "KETEBALAN: 2"
 thickLabel.TextColor3 = Color3.fromRGB(200,200,220)
 thickLabel.BackgroundTransparency = 1
 thickLabel.Font = Enum.Font.GothamBold
 thickLabel.TextSize = 12
 thickLabel.TextXAlignment = Enum.TextXAlignment.Left
-thickLabel.Parent = scroll
+thickLabel.Parent = thickFrame
 
-local thickMinus = CreateMinusButton(scroll, y)
-local thickPlus = CreatePlusButton(scroll, y)
-y = y + 40
+local thickMinus = Instance.new("TextButton")
+thickMinus.Size = UDim2.new(0, 35, 0, 28)
+thickMinus.Position = UDim2.new(1, -78, 0.5, -14)
+thickMinus.Text = "-"
+thickMinus.TextColor3 = Color3.fromRGB(255,255,255)
+thickMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+thickMinus.Font = Enum.Font.GothamBold
+thickMinus.TextSize = 18
+thickMinus.Parent = thickFrame
+local tmCorner = Instance.new("UICorner")
+tmCorner.CornerRadius = UDim.new(0, 5)
+tmCorner.Parent = thickMinus
 
--- ========== SECTION MULTI HIT ==========
+local thickPlus = Instance.new("TextButton")
+thickPlus.Size = UDim2.new(0, 35, 0, 28)
+thickPlus.Position = UDim2.new(1, -38, 0.5, -14)
+thickPlus.Text = "+"
+thickPlus.TextColor3 = Color3.fromRGB(255,255,255)
+thickPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+thickPlus.Font = Enum.Font.GothamBold
+thickPlus.TextSize = 18
+thickPlus.Parent = thickFrame
+local tpCorner = Instance.new("UICorner")
+tpCorner.CornerRadius = UDim.new(0, 5)
+tpCorner.Parent = thickPlus
+y = y + 42
+
+-- TITLE HIT
 local hitTitle = Instance.new("TextLabel")
-hitTitle.Size = UDim2.new(1, 0, 0, 28)
-hitTitle.Position = UDim2.new(0, 0, 0, y)
-hitTitle.Text = "--- ⚔️ MULTI HIT ⚔️ ---"
+hitTitle.Size = UDim2.new(1, -16, 0, 25)
+hitTitle.Position = UDim2.new(0, 8, 0, y)
+hitTitle.Text = "--- MULTI HIT ---"
 hitTitle.TextColor3 = Color3.fromRGB(155, 0, 255)
 hitTitle.BackgroundTransparency = 1
 hitTitle.Font = Enum.Font.GothamBold
 hitTitle.TextSize = 12
-hitTitle.Parent = scroll
-y = y + 30
+hitTitle.Parent = frame
+y = y + 28
 
--- Attack Manual
+-- ATTACK BUTTON
 local attackBtn = Instance.new("TextButton")
-attackBtn.Size = UDim2.new(1, 0, 0, 50)
-attackBtn.Position = UDim2.new(0, 0, 0, y)
-attackBtn.Text = "⚔️ SERANG SEMUA! ⚔️"
+attackBtn.Size = UDim2.new(1, -16, 0, 48)
+attackBtn.Position = UDim2.new(0, 8, 0, y)
+attackBtn.Text = "SERANG SEMUA!"
 attackBtn.TextColor3 = Color3.fromRGB(255,255,255)
 attackBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
 attackBtn.Font = Enum.Font.GothamBold
-attackBtn.TextSize = 14
-attackBtn.Parent = scroll
+attackBtn.TextSize = 16
+attackBtn.Parent = frame
 local aCorner = Instance.new("UICorner")
 aCorner.CornerRadius = UDim.new(0, 8)
 aCorner.Parent = attackBtn
-y = y + 56
+y = y + 54
 
--- Auto Hit Toggle
-local autoBtn = CreateSimpleButton(scroll, "AUTO HIT (ON/OFF)", y)
-y = y + 42
+-- AUTO HIT BUTTON
+local autoBtn = Instance.new("TextButton")
+autoBtn.Size = UDim2.new(1, -16, 0, 38)
+autoBtn.Position = UDim2.new(0, 8, 0, y)
+autoBtn.Text = "AUTO HIT: OFF"
+autoBtn.TextColor3 = Color3.fromRGB(255,255,255)
+autoBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
+autoBtn.Font = Enum.Font.GothamBold
+autoBtn.TextSize = 13
+autoBtn.Parent = frame
+local auCorner = Instance.new("UICorner")
+auCorner.CornerRadius = UDim.new(0, 6)
+auCorner.Parent = autoBtn
+y = y + 45
 
--- Status Auto Hit
+-- STATUS AUTO
 local autoStatus = Instance.new("TextLabel")
-autoStatus.Size = UDim2.new(1, 0, 0, 30)
-autoStatus.Position = UDim2.new(0, 0, 0, y)
+autoStatus.Size = UDim2.new(1, -16, 0, 28)
+autoStatus.Position = UDim2.new(0, 8, 0, y)
 autoStatus.Text = "STATUS: MATI"
 autoStatus.TextColor3 = Color3.fromRGB(255,100,100)
 autoStatus.BackgroundColor3 = Color3.fromRGB(30,30,42)
 autoStatus.BackgroundTransparency = 0
 autoStatus.Font = Enum.Font.GothamBold
 autoStatus.TextSize = 11
-autoStatus.Parent = scroll
+autoStatus.Parent = frame
 local asCorner = Instance.new("UICorner")
 asCorner.CornerRadius = UDim.new(0, 6)
 asCorner.Parent = autoStatus
-y = y + 38
-
--- Info Radius
-local rangeLabel = Instance.new("TextLabel")
-rangeLabel.Size = UDim2.new(1, 0, 0, 28)
-rangeLabel.Position = UDim2.new(0, 0, 0, y)
-rangeLabel.Text = "📡 RADIUS: 100 METER (MAX)"
-rangeLabel.TextColor3 = Color3.fromRGB(0,255,0)
-rangeLabel.BackgroundTransparency = 1
-rangeLabel.Font = Enum.Font.GothamBold
-rangeLabel.TextSize = 11
-rangeLabel.Parent = scroll
-y = y + 30
-
--- Info Damage
-local damageLabel = Instance.new("TextLabel")
-damageLabel.Size = UDim2.new(1, 0, 0, 28)
-damageLabel.Position = UDim2.new(0, 0, 0, y)
-damageLabel.Text = "💥 DAMAGE: 999 (MAX)"
-damageLabel.TextColor3 = Color3.fromRGB(0,255,0)
-damageLabel.BackgroundTransparency = 1
-damageLabel.Font = Enum.Font.GothamBold
-damageLabel.TextSize = 11
-damageLabel.Parent = scroll
-y = y + 30
-
--- Info Hit Speed
-local delayLabel = Instance.new("TextLabel")
-delayLabel.Size = UDim2.new(1, 0, 0, 28)
-delayLabel.Position = UDim2.new(0, 0, 0, y)
-delayLabel.Text = "⚡ 100 HIT PER DETIK (MAX)"
-delayLabel.TextColor3 = Color3.fromRGB(0,255,0)
-delayLabel.BackgroundTransparency = 1
-delayLabel.Font = Enum.Font.GothamBold
-delayLabel.TextSize = 11
-delayLabel.Parent = scroll
 y = y + 35
 
--- ========== SECTION BOOST ==========
+-- INFO RADIUS
+local radText = Instance.new("TextLabel")
+radText.Size = UDim2.new(1, -16, 0, 22)
+radText.Position = UDim2.new(0, 8, 0, y)
+radText.Text = "RADIUS: 100 METER (MAX)"
+radText.TextColor3 = Color3.fromRGB(0,255,0)
+radText.BackgroundTransparency = 1
+radText.Font = Enum.Font.GothamBold
+radText.TextSize = 11
+radText.Parent = frame
+y = y + 25
+
+-- INFO DAMAGE
+local dmgText = Instance.new("TextLabel")
+dmgText.Size = UDim2.new(1, -16, 0, 22)
+dmgText.Position = UDim2.new(0, 8, 0, y)
+dmgText.Text = "DAMAGE: 999 (MAX)"
+dmgText.TextColor3 = Color3.fromRGB(0,255,0)
+dmgText.BackgroundTransparency = 1
+dmgText.Font = Enum.Font.GothamBold
+dmgText.TextSize = 11
+dmgText.Parent = frame
+y = y + 25
+
+-- INFO HIT SPEED
+local hitSpdText = Instance.new("TextLabel")
+hitSpdText.Size = UDim2.new(1, -16, 0, 22)
+hitSpdText.Position = UDim2.new(0, 8, 0, y)
+hitSpdText.Text = "100 HIT PER DETIK (MAX)"
+hitSpdText.TextColor3 = Color3.fromRGB(0,255,0)
+hitSpdText.BackgroundTransparency = 1
+hitSpdText.Font = Enum.Font.GothamBold
+hitSpdText.TextSize = 11
+hitSpdText.Parent = frame
+y = y + 30
+
+-- TITLE BOOST
 local boostTitle = Instance.new("TextLabel")
-boostTitle.Size = UDim2.new(1, 0, 0, 28)
-boostTitle.Position = UDim2.new(0, 0, 0, y)
-boostTitle.Text = "--- 🏃 BOOST MENU 🏃 ---"
+boostTitle.Size = UDim2.new(1, -16, 0, 25)
+boostTitle.Position = UDim2.new(0, 8, 0, y)
+boostTitle.Text = "--- BOOST MENU ---"
 boostTitle.TextColor3 = Color3.fromRGB(155, 0, 255)
 boostTitle.BackgroundTransparency = 1
 boostTitle.Font = Enum.Font.GothamBold
 boostTitle.TextSize = 12
-boostTitle.Parent = scroll
-y = y + 30
+boostTitle.Parent = frame
+y = y + 28
 
-local speedBtn = CreateSimpleButton(scroll, "SPEED BOOST (999)", y)
-y = y + 42
-local jumpBtn = CreateSimpleButton(scroll, "JUMP BOOST (999)", y)
+-- SPEED BUTTON
+local speedBtn = Instance.new("TextButton")
+speedBtn.Size = UDim2.new(1, -16, 0, 38)
+speedBtn.Position = UDim2.new(0, 8, 0, y)
+speedBtn.Text = "SPEED BOOST (999): OFF"
+speedBtn.TextColor3 = Color3.fromRGB(255,255,255)
+speedBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
+speedBtn.Font = Enum.Font.GothamBold
+speedBtn.TextSize = 12
+speedBtn.Parent = frame
+local spCorner = Instance.new("UICorner")
+spCorner.CornerRadius = UDim.new(0, 6)
+spCorner.Parent = speedBtn
 y = y + 42
 
--- Status Label
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, 0, 0, 32)
-statusLabel.Position = UDim2.new(0, 0, 0, y)
-statusLabel.Text = "✅ VORTEX READY"
-statusLabel.TextColor3 = Color3.fromRGB(0,255,0)
-statusLabel.BackgroundColor3 = Color3.fromRGB(25,25,35)
-statusLabel.BackgroundTransparency = 0
-statusLabel.Font = Enum.Font.GothamBold
-statusLabel.TextSize = 11
-statusLabel.Parent = scroll
+-- JUMP BUTTON
+local jumpBtn = Instance.new("TextButton")
+jumpBtn.Size = UDim2.new(1, -16, 0, 38)
+jumpBtn.Position = UDim2.new(0, 8, 0, y)
+jumpBtn.Text = "JUMP BOOST (999): OFF"
+jumpBtn.TextColor3 = Color3.fromRGB(255,255,255)
+jumpBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
+jumpBtn.Font = Enum.Font.GothamBold
+jumpBtn.TextSize = 12
+jumpBtn.Parent = frame
+local jpCorner = Instance.new("UICorner")
+jpCorner.CornerRadius = UDim.new(0, 6)
+jpCorner.Parent = jumpBtn
+y = y + 42
+
+-- STATUS TEXT
+local statusText = Instance.new("TextLabel")
+statusText.Size = UDim2.new(1, -16, 0, 32)
+statusText.Position = UDim2.new(0, 8, 0, y)
+statusText.Text = "READY"
+statusText.TextColor3 = Color3.fromRGB(0,255,0)
+statusText.BackgroundColor3 = Color3.fromRGB(25,25,35)
+statusText.BackgroundTransparency = 0
+statusText.Font = Enum.Font.GothamBold
+statusText.TextSize = 12
+statusText.Parent = frame
 local stCorner = Instance.new("UICorner")
 stCorner.CornerRadius = UDim.new(0, 6)
-stCorner.Parent = statusLabel
-y = y + 40
-
-scroll.CanvasSize = UDim2.new(0, 0, 0, y + 10)
-
--- ========== FUNGSI UI ==========
-function CreateSimpleButton(parent, text, yPos)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 38)
-    btn.Position = UDim2.new(0, 0, 0, yPos)
-    btn.Text = text .. ": OFF"
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,55)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 13
-    btn.Parent = parent
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
-    return btn
-end
-
-function CreateMinusButton(parent, yPos)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 40, 0, 30)
-    btn.Position = UDim2.new(0.7, 0, 0, yPos)
-    btn.Text = "-"
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.BackgroundColor3 = Color3.fromRGB(55,55,75)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 18
-    btn.Parent = parent
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
-    return btn
-end
-
-function CreatePlusButton(parent, yPos)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 40, 0, 30)
-    btn.Position = UDim2.new(0.85, 0, 0, yPos)
-    btn.Text = "+"
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.BackgroundColor3 = Color3.fromRGB(55,55,75)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 18
-    btn.Parent = parent
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
-    return btn
-end
+stCorner.Parent = statusText
+y = y + 42
 
 -- ========== UPDATE FUNGSI ==========
 local function UpdateMaster()
     masterESP = not masterESP
-    masterBtn.Text = masterESP and "MASTER ESP: ON ✅" or "MASTER ESP: OFF ❌"
+    masterBtn.Text = masterESP and "MASTER ESP: ON" or "MASTER ESP: OFF"
     masterBtn.BackgroundColor3 = masterESP and Color3.fromRGB(80,0,120) or Color3.fromRGB(40,40,55)
 end
 
 local function UpdateBox()
     espBox = not espBox
-    boxBtn.Text = espBox and "BOX ESP: ON ✅" or "BOX ESP: OFF ❌"
+    boxBtn.Text = espBox and "BOX ESP: ON" or "BOX ESP: OFF"
     boxBtn.BackgroundColor3 = espBox and Color3.fromRGB(80,0,120) or Color3.fromRGB(40,40,55)
 end
 
 local function UpdateTracer()
     espTracer = not espTracer
-    tracerBtn.Text = espTracer and "TRACER ESP: ON ✅" or "TRACER ESP: OFF ❌"
+    tracerBtn.Text = espTracer and "TRACER ESP: ON" or "TRACER ESP: OFF"
     tracerBtn.BackgroundColor3 = espTracer and Color3.fromRGB(80,0,120) or Color3.fromRGB(40,40,55)
 end
 
 local function UpdateName()
     espName = not espName
-    nameBtn.Text = espName and "NAME ESP: ON ✅" or "NAME ESP: OFF ❌"
+    nameBtn.Text = espName and "NAME ESP: ON" or "NAME ESP: OFF"
     nameBtn.BackgroundColor3 = espName and Color3.fromRGB(80,0,120) or Color3.fromRGB(40,40,55)
 end
 
 local function UpdateAuto()
     autoHit = not autoHit
-    autoBtn.Text = autoHit and "AUTO HIT: ON ✅" or "AUTO HIT: OFF ❌"
+    autoBtn.Text = autoHit and "AUTO HIT: ON" or "AUTO HIT: OFF"
     autoBtn.BackgroundColor3 = autoHit and Color3.fromRGB(80,0,120) or Color3.fromRGB(40,40,55)
-    autoStatus.Text = autoHit and "STATUS: HIDUP - SERANG SEMUA TARGET" or "STATUS: MATI"
+    autoStatus.Text = autoHit and "STATUS: HIDUP - SERANG SEMUA" or "STATUS: MATI"
     autoStatus.TextColor3 = autoHit and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,100,100)
     attackBtn.BackgroundColor3 = autoHit and Color3.fromRGB(0,120,0) or Color3.fromRGB(200,0,0)
 end
 
 local function UpdateSpeed()
     speedBoost = not speedBoost
-    speedBtn.Text = speedBoost and "SPEED BOOST: ON ✅ (999)" or "SPEED BOOST: OFF ❌"
+    speedBtn.Text = speedBoost and "SPEED BOOST (999): ON" or "SPEED BOOST (999): OFF"
     speedBtn.BackgroundColor3 = speedBoost and Color3.fromRGB(80,0,120) or Color3.fromRGB(40,40,55)
     ApplySpeed()
-    if speedBoost then
-        statusLabel.Text = "🏃 SPEED 999 ACTIVE!"
-        task.wait(0.5)
-        statusLabel.Text = "✅ VORTEX READY"
-    end
 end
 
 local function UpdateJump()
     jumpBoost = not jumpBoost
-    jumpBtn.Text = jumpBoost and "JUMP BOOST: ON ✅ (999)" or "JUMP BOOST: OFF ❌"
+    jumpBtn.Text = jumpBoost and "JUMP BOOST (999): ON" or "JUMP BOOST (999): OFF"
     jumpBtn.BackgroundColor3 = jumpBoost and Color3.fromRGB(80,0,120) or Color3.fromRGB(40,40,55)
     ApplyJump()
-    if jumpBoost then
-        statusLabel.Text = "🦘 JUMP 999 ACTIVE!"
-        task.wait(0.5)
-        statusLabel.Text = "✅ VORTEX READY"
-    end
 end
 
--- ========== CONNECT TOMBOL ==========
+-- ========== CONNECT ==========
 masterBtn.MouseButton1Click:Connect(UpdateMaster)
 boxBtn.MouseButton1Click:Connect(UpdateBox)
 tracerBtn.MouseButton1Click:Connect(UpdateTracer)
@@ -548,7 +576,6 @@ autoBtn.MouseButton1Click:Connect(UpdateAuto)
 speedBtn.MouseButton1Click:Connect(UpdateSpeed)
 jumpBtn.MouseButton1Click:Connect(UpdateJump)
 
--- Slider ESP
 thickMinus.MouseButton1Click:Connect(function()
     espThick = math.max(1, espThick - 1)
     thickLabel.Text = "KETEBALAN: " .. espThick
@@ -560,49 +587,53 @@ thickPlus.MouseButton1Click:Connect(function()
     RefreshESP()
 end)
 
--- ========== DRAG MENU ==========
-local dragActive = false
-local dragStartPos = nil
-local startFramePos = nil
+-- ========== DRAG ==========
+local drag = false
+local dragStart, frameStart
 
-header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragActive = true
-        dragStartPos = input.Position
-        startFramePos = mainFrame.Position
+header.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
+        drag = true
+        dragStart = i.Position
+        frameStart = frame.Position
     end
 end)
 
-header.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragActive = false
+header.InputEnded:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseButton1 then
+        drag = false
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if not dragActive then return end
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStartPos
-        mainFrame.Position = UDim2.new(
-            startFramePos.X.Scale, startFramePos.X.Offset + delta.X,
-            startFramePos.Y.Scale, startFramePos.Y.Offset + delta.Y
-        )
+UserInputService.InputChanged:Connect(function(i)
+    if not drag then return end
+    if i.UserInputType == Enum.UserInputType.Touch or i.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = i.Position - dragStart
+        frame.Position = UDim2.new(frameStart.X.Scale, frameStart.X.Offset + delta.X, frameStart.Y.Scale, frameStart.Y.Offset + delta.Y)
     end
 end)
 
 -- ========== MINIMIZE ==========
-local minActive = false
+local min = false
 minBtn.MouseButton1Click:Connect(function()
-    if minActive then
-        mainFrame.Size = UDim2.new(0, 280, 0, 480)
-        scroll.Visible = true
+    if min then
+        frame.Size = UDim2.new(0, 260, 0, 550)
+        for _, v in pairs(frame:GetChildren()) do
+            if v:IsA("TextButton") or v:IsA("TextLabel") or (v:IsA("Frame") and v ~= header) then
+                v.Visible = true
+            end
+        end
         minBtn.Text = "-"
-        minActive = false
+        min = false
     else
-        mainFrame.Size = UDim2.new(0, 120, 0, 40)
-        scroll.Visible = false
+        frame.Size = UDim2.new(0, 120, 0, 40)
+        for _, v in pairs(frame:GetChildren()) do
+            if v:IsA("TextButton") or v:IsA("TextLabel") or (v:IsA("Frame") and v ~= header) then
+                v.Visible = false
+            end
+        end
         minBtn.Text = "+"
-        minActive = true
+        min = true
     end
 end)
 
@@ -616,17 +647,16 @@ closeBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ========== INIT ESP ==========
+-- ========== INIT ==========
 for _, p in pairs(Players:GetPlayers()) do
     if p ~= LocalPlayer then CreateESP(p) end
 end
 Players.PlayerAdded:Connect(function(p) if p ~= LocalPlayer then CreateESP(p) end end)
 Players.PlayerRemoving:Connect(RemoveESP)
 
--- ========== CHARACTER SPAWN ==========
 LocalPlayer.CharacterAdded:Connect(function(char)
     char:WaitForChild("Humanoid")
-    task.wait(0.5)
+    wait(0.5)
     origSpeed = char.Humanoid.WalkSpeed
     origJump = char.Humanoid.JumpPower
     ApplySpeed()
@@ -637,32 +667,17 @@ if LocalPlayer.Character then
     origJump = LocalPlayer.Character.Humanoid.JumpPower
 end
 
--- ========== AUTO HIT LOOP (100 HIT PER DETIK) ==========
 coroutine.wrap(function()
     while true do
-        if autoHit then
-            DoAutoHit()
-        end
-        task.wait(hitDelay) -- 0.01 detik = 100 hit per detik
+        if autoHit then DoAutoHit() end
+        wait(hitDelay)
     end
 end)()
 
--- ========== ESP LOOP ==========
 RunService.RenderStepped:Connect(UpdateESP)
 
 print("========================================")
-print("⚔️ VORTEX ULTIMATE - LOADED! ⚔️")
-print("")
-print("🔥 FITUR MAXED OUT:")
-print("- RADIUS: 100 METER")
-print("- DAMAGE: 999")
-print("- 100 HIT PER DETIK")
-print("- SPEED BOOST: 999")
-print("- JUMP BOOST: 999")
-print("")
-print("📌 CARA PAKAI:")
-print("- TEKAN AUTO HIT buat nyalakan/matikan")
-print("- SERANG SEMUA! buat manual attack")
-print("- GESER HEADER buat mindahin menu")
-print("- TEKAN - buat minimize, X buat close")
+print("VORTEX ULTIMATE - LOADED!")
+print("SEMUA TOMBOL LANGSUNG KELIHATAN")
+print("GESER HEADER UNTUK MOVE")
 print("========================================")

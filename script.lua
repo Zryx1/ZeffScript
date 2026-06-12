@@ -1,12 +1,13 @@
 -- ============================================
--- ZEFF VORTEX - FINAL FIX
--- MASTER TOGGLE + 3 ESP (BOX, TRACER, NAME)
+-- ZEFF VORTEX - FINAL FIX BOX ESP
+-- MASTER TOGGLE (ON/OFF SEMUA ESP)
+-- 3 ESP: BOX, TRACER, NAME
 -- ============================================
 
 -- ============================================
 -- VARIABEL ESP
 -- ============================================
-local masterEnabled = false  -- MASTER TOGGLE
+local masterEnabled = false
 local espBoxEnabled = false
 local espTracerEnabled = false
 local espNameEnabled = false
@@ -19,16 +20,17 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
-local espDataStore = {}
+-- Storage untuk semua ESP
+local espList = {}
 
 -- ============================================
 -- FUNGSI MEMBUAT ESP UNTUK 1 PLAYER
 -- ============================================
-local function CreateESPForPlayer(player)
+local function CreateESP(player)
     if player == LocalPlayer then return end
-    if espDataStore[player] then return end
+    if espList[player] then return end
     
-    local data = {}
+    local esp = {}
     
     -- BOX
     local box = Drawing.new("Square")
@@ -37,17 +39,17 @@ local function CreateESPForPlayer(player)
     box.Thickness = espThickness
     box.Filled = false
     box.Transparency = 0.5
-    data.box = box
+    esp.box = box
     
-    -- TRACER (Line)
+    -- TRACER
     local tracer = Drawing.new("Line")
     tracer.Visible = false
     tracer.Color = espColor
     tracer.Thickness = espThickness
     tracer.Transparency = 0.5
-    data.tracer = tracer
+    esp.tracer = tracer
     
-    -- NAME TAG
+    -- NAME
     local nameTag = Drawing.new("Text")
     nameTag.Visible = false
     nameTag.Color = espColor
@@ -55,108 +57,149 @@ local function CreateESPForPlayer(player)
     nameTag.Center = true
     nameTag.Outline = true
     nameTag.OutlineColor = Color3.fromRGB(0, 0, 0)
-    data.nameTag = nameTag
+    esp.nameTag = nameTag
     
-    data.player = player
-    espDataStore[player] = data
+    esp.player = player
+    espList[player] = esp
 end
 
 -- ============================================
--- FUNGSI HAPUS ESP PLAYER
+-- FUNGSI HAPUS ESP
 -- ============================================
-local function RemoveESPForPlayer(player)
-    local data = espDataStore[player]
-    if data then
-        if data.box then data.box:Remove() end
-        if data.tracer then data.tracer:Remove() end
-        if data.nameTag then data.nameTag:Remove() end
-        espDataStore[player] = nil
+local function RemoveESP(player)
+    local esp = espList[player]
+    if esp then
+        if esp.box then esp.box:Remove() end
+        if esp.tracer then esp.tracer:Remove() end
+        if esp.nameTag then esp.nameTag:Remove() end
+        espList[player] = nil
     end
+end
+
+-- ============================================
+-- UPDATE BOX (HITUNG POSISI & UKURAN)
+-- ============================================
+local function UpdateBox(box, rootPart)
+    if not box or not rootPart then return end
+    
+    local vector, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+    if not onScreen then
+        box.Visible = false
+        return
+    end
+    
+    local distance = (rootPart.Position - Camera.CFrame.Position).Magnitude
+    local boxSize = math.clamp(200 / distance, 30, 120)
+    
+    local boxX = vector.X - boxSize / 2
+    local boxY = vector.Y - boxSize / 1.2
+    
+    box.Size = Vector2.new(boxSize, boxSize)
+    box.Position = Vector2.new(boxX, boxY)
+    box.Visible = true
+end
+
+-- ============================================
+-- UPDATE TRACER
+-- ============================================
+local function UpdateTracer(tracer, rootPart, center)
+    if not tracer or not rootPart then return end
+    
+    local vector, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+    if not onScreen then
+        tracer.Visible = false
+        return
+    end
+    
+    tracer.From = center
+    tracer.To = Vector2.new(vector.X, vector.Y)
+    tracer.Visible = true
+end
+
+-- ============================================
+-- UPDATE NAME
+-- ============================================
+local function UpdateName(nameTag, player, rootPart)
+    if not nameTag or not rootPart then return end
+    
+    local vector, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+    if not onScreen then
+        nameTag.Visible = false
+        return
+    end
+    
+    nameTag.Text = player.Name
+    nameTag.Position = Vector2.new(vector.X, vector.Y - 25)
+    nameTag.Visible = true
 end
 
 -- ============================================
 -- UPDATE SEMUA ESP (PER FRAME)
 -- ============================================
 local function UpdateAllESP()
-    local viewportSize = Camera.ViewportSize
-    local center = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
+    if not masterEnabled then
+        -- Sembunyikan semua
+        for _, esp in pairs(espList) do
+            if esp.box then esp.box.Visible = false end
+            if esp.tracer then esp.tracer.Visible = false end
+            if esp.nameTag then esp.nameTag.Visible = false end
+        end
+        return
+    end
     
-    for player, data in pairs(espDataStore) do
-        local character = player.Character
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    for _, esp in pairs(espList) do
+        local character = esp.player.Character
         local humanoid = character and character:FindFirstChild("Humanoid")
         local rootPart = character and character:FindFirstChild("HumanoidRootPart")
         
         local isValid = character and humanoid and rootPart and humanoid.Health > 0
         
-        if not isValid or not masterEnabled then
-            -- Sembunyikan semua
-            if data.box then data.box.Visible = false end
-            if data.tracer then data.tracer.Visible = false end
-            if data.nameTag then data.nameTag.Visible = false end
+        if not isValid then
+            if esp.box then esp.box.Visible = false end
+            if esp.tracer then esp.tracer.Visible = false end
+            if esp.nameTag then esp.nameTag.Visible = false end
         else
-            local vector, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+            -- Update BOX
+            if espBoxEnabled and esp.box then
+                UpdateBox(esp.box, rootPart)
+            elseif esp.box then
+                esp.box.Visible = false
+            end
             
-            if onScreen then
-                -- Update BOX
-                if espBoxEnabled and data.box then
-                    local distance = (rootPart.Position - Camera.CFrame.Position).Magnitude
-                    local boxSize = math.clamp(250 / distance, 30, 130)
-                    local boxX = vector.X - boxSize / 2
-                    local boxY = vector.Y - boxSize / 1.3
-                    
-                    data.box.Size = Vector2.new(boxSize, boxSize)
-                    data.box.Position = Vector2.new(boxX, boxY)
-                    data.box.Visible = true
-                    data.box.Color = espColor
-                    data.box.Thickness = espThickness
-                elseif data.box then
-                    data.box.Visible = false
-                end
-                
-                -- Update TRACER
-                if espTracerEnabled and data.tracer then
-                    data.tracer.From = center
-                    data.tracer.To = Vector2.new(vector.X, vector.Y)
-                    data.tracer.Visible = true
-                    data.tracer.Color = espColor
-                    data.tracer.Thickness = espThickness
-                elseif data.tracer then
-                    data.tracer.Visible = false
-                end
-                
-                -- Update NAME
-                if espNameEnabled and data.nameTag then
-                    data.nameTag.Text = player.Name
-                    data.nameTag.Position = Vector2.new(vector.X, vector.Y - 20)
-                    data.nameTag.Visible = true
-                    data.nameTag.Color = espColor
-                elseif data.nameTag then
-                    data.nameTag.Visible = false
-                end
-            else
-                if data.box then data.box.Visible = false end
-                if data.tracer then data.tracer.Visible = false end
-                if data.nameTag then data.nameTag.Visible = false end
+            -- Update TRACER
+            if espTracerEnabled and esp.tracer then
+                UpdateTracer(esp.tracer, rootPart, center)
+            elseif esp.tracer then
+                esp.tracer.Visible = false
+            end
+            
+            -- Update NAME
+            if espNameEnabled and esp.nameTag then
+                UpdateName(esp.nameTag, esp.player, rootPart)
+            elseif esp.nameTag then
+                esp.nameTag.Visible = false
             end
         end
     end
 end
 
 -- ============================================
--- REFRESH SEMUA (Warna & Ketebalan)
+-- REFRESH WARNA & KETEBALAN
 -- ============================================
-local function RefreshAllESP()
-    for _, data in pairs(espDataStore) do
-        if data.box then
-            data.box.Color = espColor
-            data.box.Thickness = espThickness
+local function RefreshStyle()
+    for _, esp in pairs(espList) do
+        if esp.box then
+            esp.box.Color = espColor
+            esp.box.Thickness = espThickness
         end
-        if data.tracer then
-            data.tracer.Color = espColor
-            data.tracer.Thickness = espThickness
+        if esp.tracer then
+            esp.tracer.Color = espColor
+            esp.tracer.Thickness = espThickness
         end
-        if data.nameTag then
-            data.nameTag.Color = espColor
+        if esp.nameTag then
+            esp.nameTag.Color = espColor
         end
     end
 end
@@ -164,21 +207,19 @@ end
 -- ============================================
 -- INITIAL PLAYERS
 -- ============================================
-local function InitializePlayers()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            CreateESPForPlayer(player)
-        end
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        CreateESP(player)
     end
 end
 
 Players.PlayerAdded:Connect(function(player)
     if player ~= LocalPlayer then
-        CreateESPForPlayer(player)
+        CreateESP(player)
     end
 end)
 
-Players.PlayerRemoving:Connect(RemoveESPForPlayer)
+Players.PlayerRemoving:Connect(RemoveESP)
 
 -- ============================================
 -- LOOP UPDATE
@@ -203,7 +244,7 @@ local function CreateMainMenu()
     screenGui.Name = "ZeffVortexMenu"
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    local success, err = pcall(function()
+    local success = pcall(function()
         screenGui.Parent = (gethui and gethui()) or CoreGui
     end)
     if not success then
@@ -283,13 +324,13 @@ local function CreateMainMenu()
     
     local yOffset = 0
     
-    -- MASTER TOGGLE (ON/OFF SEMUA ESP)
+    -- MASTER TOGGLE
     local masterBtn = Instance.new("TextButton")
     masterBtn.Size = UDim2.new(1, 0, 0, 45)
     masterBtn.Position = UDim2.new(0, 0, 0, yOffset)
     masterBtn.Text = "🔘 MASTER ESP"
     masterBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    masterBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 150)
+    masterBtn.BackgroundColor3 = Color3.fromRGB(80, 0, 120)
     masterBtn.Font = Enum.Font.GothamBold
     masterBtn.TextSize = 14
     masterBtn.Parent = content
@@ -458,8 +499,8 @@ local function CreateMainMenu()
     plusCorner.CornerRadius = UDim.new(0, 6)
     plusCorner.Parent = plusBtn
     
-    -- UPDATE ALL BUTTON STATUS
-    local function UpdateAllButtons()
+    -- UPDATE BUTTONS
+    local function UpdateButtons()
         -- MASTER
         if masterEnabled then
             masterStatus.Text = "ON ✅"
@@ -471,7 +512,7 @@ local function CreateMainMenu()
             masterBtn.BackgroundColor3 = Color3.fromRGB(80, 0, 120)
         end
         
-        -- BOX
+        -- BOX (hanya warna, tidak mati karena master)
         boxStatus.Text = espBoxEnabled and "ON ✅" or "OFF"
         boxStatus.TextColor3 = espBoxEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
         boxBtn.BackgroundColor3 = espBoxEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
@@ -487,62 +528,41 @@ local function CreateMainMenu()
         nameBtn.BackgroundColor3 = espNameEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
     end
     
-    -- MASTER BUTTON
+    -- MASTER BUTTON (ON/OFF semua ESP, bukan matiin fitur)
     masterBtn.MouseButton1Click:Connect(function()
         masterEnabled = not masterEnabled
-        
-        if masterEnabled then
-            -- Jika master ON, semua ikut ON
-            espBoxEnabled = true
-            espTracerEnabled = true
-            espNameEnabled = true
-        else
-            -- Jika master OFF, semua ikut OFF
-            espBoxEnabled = false
-            espTracerEnabled = false
-            espNameEnabled = false
-        end
-        UpdateAllButtons()
+        UpdateButtons()
     end)
     
     -- BOX BUTTON
     boxBtn.MouseButton1Click:Connect(function()
-        if not masterEnabled then
-            masterEnabled = true
-        end
         espBoxEnabled = not espBoxEnabled
-        UpdateAllButtons()
+        UpdateButtons()
     end)
     
     -- TRACER BUTTON
     tracerBtn.MouseButton1Click:Connect(function()
-        if not masterEnabled then
-            masterEnabled = true
-        end
         espTracerEnabled = not espTracerEnabled
-        UpdateAllButtons()
+        UpdateButtons()
     end)
     
     -- NAME BUTTON
     nameBtn.MouseButton1Click:Connect(function()
-        if not masterEnabled then
-            masterEnabled = true
-        end
         espNameEnabled = not espNameEnabled
-        UpdateAllButtons()
+        UpdateButtons()
     end)
     
     -- KETEBALAN
     minusBtn.MouseButton1Click:Connect(function()
         espThickness = math.max(1, espThickness - 1)
         thickValue.Text = tostring(espThickness)
-        RefreshAllESP()
+        RefreshStyle()
     end)
     
     plusBtn.MouseButton1Click:Connect(function()
         espThickness = math.min(5, espThickness + 1)
         thickValue.Text = tostring(espThickness)
-        RefreshAllESP()
+        RefreshStyle()
     end)
     
     -- DRAG
@@ -597,15 +617,10 @@ local function CreateMainMenu()
         currentMenu = nil
     end)
     
-    UpdateAllButtons()
+    UpdateButtons()
 end
 
 -- ============================================
--- INITIALIZE
--- ============================================
-InitializePlayers()
-
--- ============================================
--- START MENU
+-- START
 -- ============================================
 CreateMainMenu()

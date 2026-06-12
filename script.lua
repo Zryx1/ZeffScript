@@ -1,7 +1,7 @@
 -- ============================================
--- ZEFF VORTEX - FINAL SCRIPT
--- TOMBOL PEDANG (BISA DIGESER, ON/OFF)
--- 3 TAB: ESP, COMBAT, MOVE
+-- ZEFF VORTEX - FULL SCRIPT
+-- TOMBOL PEDANG BISA DIGESER
+-- MENU LANGSUNG MUNCUL
 -- ============================================
 
 -- ============================================
@@ -10,23 +10,16 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- Variabel UI
 local mainGui = nil
-local swordButton = nil
+local swordBtn = nil
 local menuFrame = nil
 local isMenuOpen = false
-local isSwordEnabled = true
 
--- Tab aktif
-local activeTab = "esp"
-
--- ============================================
--- ESP VARIABEL
--- ============================================
+-- Variabel ESP
 local masterEnabled = false
 local espBoxEnabled = false
 local espTracerEnabled = false
@@ -35,18 +28,14 @@ local espColor = Color3.fromRGB(155, 0, 255)
 local espThickness = 2
 local espList = {}
 
--- ============================================
--- COMBAT VARIABEL
--- ============================================
+-- Variabel Combat
 local multiHitEnabled = false
 local multiHitRange = 25
 local multiHitTargets = 25
 local multiDamageEnabled = false
 local multiDamageMultiplier = 1
 
--- ============================================
--- MOVE VARIABEL
--- ============================================
+-- Variabel Move
 local speedEnabled = false
 local speedValue = 16
 local jumpEnabled = false
@@ -54,68 +43,62 @@ local jumpValue = 50
 local originalWalkSpeed = 16
 local originalJumpPower = 50
 
+-- Tab aktif
+local activeTab = "esp"
+
 -- ============================================
--- CREATE MAIN GUI
+-- FUNGSI CREATE UI
 -- ============================================
-local function CreateMainGUI()
+local function CreateUI()
     if mainGui then mainGui:Destroy() end
     
     local CoreGui = game:GetService("CoreGui")
     mainGui = Instance.new("ScreenGui")
-    mainGui.Name = "ZeffVortexGUI"
-    mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    mainGui.Name = "ZeffVortex"
+    mainGui.ResetOnSpawn = false
     
-    local success = pcall(function()
+    local success, err = pcall(function()
         mainGui.Parent = (gethui and gethui()) or CoreGui
     end)
     if not success then
         mainGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     end
     
-    -- ========== TOMBOL PEDANG (BISA DIGESER) ==========
-    swordButton = Instance.new("ImageButton")
-    swordButton.Size = UDim2.new(0, 50, 0, 50)
-    swordButton.Position = UDim2.new(1, -65, 1, -180)
-    swordButton.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
-    swordButton.BackgroundTransparency = 0.15
-    swordButton.BorderSizePixel = 0
-    swordButton.Image = "rbxassetid://3926305904" -- Efek glow
-    swordButton.ImageColor3 = Color3.fromRGB(155, 0, 255)
-    swordButton.ImageTransparency = 0.3
-    swordButton.Parent = mainGui
+    print("✅ ZEFF VORTEX - UI Created")
     
-    -- Sudut tombol
-    local swordCorner = Instance.new("UICorner")
-    swordCorner.CornerRadius = UDim.new(0, 25)
-    swordCorner.Parent = swordButton
+    -- ========== TOMBOL PEDANG ==========
+    swordBtn = Instance.new("TextButton")
+    swordBtn.Size = UDim2.new(0, 50, 0, 50)
+    swordBtn.Position = UDim2.new(1, -65, 1, -180)
+    swordBtn.Text = "⚔️"
+    swordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    swordBtn.TextSize = 26
+    swordBtn.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
+    swordBtn.BackgroundTransparency = 0.2
+    swordBtn.BorderSizePixel = 0
+    swordBtn.Parent = mainGui
     
-    -- Icon pedang
-    local swordIcon = Instance.new("TextLabel")
-    swordIcon.Size = UDim2.new(1, 0, 1, 0)
-    swordIcon.Text = "⚔️"
-    swordIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
-    swordIcon.BackgroundTransparency = 1
-    swordIcon.Font = Enum.Font.GothamBold
-    swordIcon.TextSize = 28
-    swordIcon.Parent = swordButton
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 25)
+    btnCorner.Parent = swordBtn
     
-    -- Status ON/OFF indicator
-    local statusDot = Instance.new("Frame")
-    statusDot.Size = UDim2.new(0, 10, 0, 10)
-    statusDot.Position = UDim2.new(1, -12, 1, -12)
-    statusDot.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-    statusDot.BorderSizePixel = 0
-    statusDot.Parent = swordButton
+    -- Indicator LED
+    local led = Instance.new("Frame")
+    led.Size = UDim2.new(0, 10, 0, 10)
+    led.Position = UDim2.new(1, -12, 1, -12)
+    led.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    led.BorderSizePixel = 0
+    led.Parent = swordBtn
     
-    local dotCorner = Instance.new("UICorner")
-    dotCorner.CornerRadius = UDim.new(1, 0)
-    dotCorner.Parent = statusDot
+    local ledCorner = Instance.new("UICorner")
+    ledCorner.CornerRadius = UDim.new(1, 0)
+    ledCorner.Parent = led
     
-    -- ========== MENU UTAMA ==========
+    -- ========== MENU FRAME ==========
     menuFrame = Instance.new("Frame")
-    menuFrame.Size = UDim2.new(0, 320, 0, 420)
-    menuFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
-    menuFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+    menuFrame.Size = UDim2.new(0, 320, 0, 430)
+    menuFrame.Position = UDim2.new(0.5, -160, 0.5, -215)
+    menuFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
     menuFrame.BackgroundTransparency = 0
     menuFrame.BorderSizePixel = 0
     menuFrame.Visible = false
@@ -131,9 +114,9 @@ local function CreateMainGUI()
     menuBorder.Transparency = 0.3
     menuBorder.Parent = menuFrame
     
-    -- Header menu
+    -- Header
     local header = Instance.new("Frame")
-    header.Size = UDim2.new(1, 0, 0, 40)
+    header.Size = UDim2.new(1, 0, 0, 42)
     header.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
     header.BackgroundTransparency = 0.15
     header.BorderSizePixel = 0
@@ -145,7 +128,7 @@ local function CreateMainGUI()
     
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(0.6, 0, 1, 0)
-    title.Position = UDim2.new(0.03, 0, 0, 0)
+    title.Position = UDim2.new(0.04, 0, 0, 0)
     title.Text = "⚔️ ZEFF VORTEX"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.BackgroundTransparency = 1
@@ -154,26 +137,25 @@ local function CreateMainGUI()
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Parent = header
     
-    -- Close menu button
-    local closeMenuBtn = Instance.new("TextButton")
-    closeMenuBtn.Size = UDim2.new(0, 28, 0, 28)
-    closeMenuBtn.Position = UDim2.new(1, -36, 0.5, -14)
-    closeMenuBtn.Text = "✕"
-    closeMenuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeMenuBtn.BackgroundTransparency = 1
-    closeMenuBtn.Font = Enum.Font.GothamBold
-    closeMenuBtn.TextSize = 14
-    closeMenuBtn.Parent = header
+    local closeMenu = Instance.new("TextButton")
+    closeMenu.Size = UDim2.new(0, 30, 0, 30)
+    closeMenu.Position = UDim2.new(1, -38, 0.5, -15)
+    closeMenu.Text = "✕"
+    closeMenu.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeMenu.BackgroundTransparency = 1
+    closeMenu.Font = Enum.Font.GothamBold
+    closeMenu.TextSize = 16
+    closeMenu.Parent = header
     
-    -- TAB BUTTONS
+    -- ========== TAB BAR ==========
     local tabBar = Instance.new("Frame")
-    tabBar.Size = UDim2.new(1, -20, 0, 35)
-    tabBar.Position = UDim2.new(0, 10, 0, 48)
+    tabBar.Size = UDim2.new(1, -20, 0, 36)
+    tabBar.Position = UDim2.new(0, 10, 0, 50)
     tabBar.BackgroundTransparency = 1
     tabBar.Parent = menuFrame
     
     local espTab = Instance.new("TextButton")
-    espTab.Size = UDim2.new(0.3, -5, 1, 0)
+    espTab.Size = UDim2.new(0.3, -4, 1, 0)
     espTab.Position = UDim2.new(0, 0, 0, 0)
     espTab.Text = "🎮 ESP"
     espTab.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -183,8 +165,8 @@ local function CreateMainGUI()
     espTab.Parent = tabBar
     
     local combatTab = Instance.new("TextButton")
-    combatTab.Size = UDim2.new(0.3, -5, 1, 0)
-    combatTab.Position = UDim2.new(0.33, 5, 0, 0)
+    combatTab.Size = UDim2.new(0.33, -4, 1, 0)
+    combatTab.Position = UDim2.new(0.32, 4, 0, 0)
     combatTab.Text = "⚔️ COMBAT"
     combatTab.TextColor3 = Color3.fromRGB(200, 200, 220)
     combatTab.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
@@ -193,8 +175,8 @@ local function CreateMainGUI()
     combatTab.Parent = tabBar
     
     local moveTab = Instance.new("TextButton")
-    moveTab.Size = UDim2.new(0.3, -5, 1, 0)
-    moveTab.Position = UDim2.new(0.66, 10, 0, 0)
+    moveTab.Size = UDim2.new(0.33, -4, 1, 0)
+    moveTab.Position = UDim2.new(0.64, 8, 0, 0)
     moveTab.Text = "🏃 MOVE"
     moveTab.TextColor3 = Color3.fromRGB(200, 200, 220)
     moveTab.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
@@ -202,7 +184,7 @@ local function CreateMainGUI()
     moveTab.TextSize = 12
     moveTab.Parent = tabBar
     
-    -- CONTENT AREA
+    -- ========== CONTENT AREA ==========
     local contentArea = Instance.new("ScrollingFrame")
     contentArea.Size = UDim2.new(1, -20, 1, -140)
     contentArea.Position = UDim2.new(0, 10, 0, 95)
@@ -212,114 +194,98 @@ local function CreateMainGUI()
     contentArea.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
     contentArea.Parent = menuFrame
     
-    -- ========== TAB CONTENT ==========
-    -- ESP CONTENT
+    -- ========== TAB 1: ESP ==========
     local espContent = Instance.new("Frame")
     espContent.Size = UDim2.new(1, 0, 1, 0)
     espContent.BackgroundTransparency = 1
     espContent.Visible = true
     espContent.Parent = contentArea
     
-    local yEsp = 5
+    local y = 5
     
     -- Master ESP
-    local masterBtn, masterStatus = CreateToggleButton(espContent, "🔘 MASTER ESP", yEsp, masterEnabled)
-    yEsp = yEsp + 48
+    local masterBtn, masterStatus = CreateToggle(espContent, "🔘 MASTER ESP", y, masterEnabled)
+    y = y + 48
     
-    -- Box ESP
-    local boxBtn, boxStatus = CreateToggleButton(espContent, "📦 BOX ESP", yEsp, espBoxEnabled)
-    yEsp = yEsp + 43
+    local boxBtn, boxStatus = CreateToggle(espContent, "📦 BOX ESP", y, espBoxEnabled)
+    y = y + 43
     
-    -- Tracer ESP
-    local tracerBtn, tracerStatus = CreateToggleButton(espContent, "📏 TRACER ESP", yEsp, espTracerEnabled)
-    yEsp = yEsp + 43
+    local tracerBtn, tracerStatus = CreateToggle(espContent, "📏 TRACER ESP", y, espTracerEnabled)
+    y = y + 43
     
-    -- Name ESP
-    local nameBtn, nameStatus = CreateToggleButton(espContent, "🏷️ NAME ESP", yEsp, espNameEnabled)
-    yEsp = yEsp + 43
+    local nameBtn, nameStatus = CreateToggle(espContent, "🏷️ NAME ESP", y, espNameEnabled)
+    y = y + 43
     
-    -- Ketebalan
-    local thickControl = CreateSliderControl(espContent, "📏 KETEBALAN", yEsp, espThickness, 1, 5)
-    yEsp = yEsp + 55
+    local thickControl = CreateSlider(espContent, "📏 KETEBALAN", y, espThickness, 1, 5)
+    y = y + 55
     
-    espContent.CanvasSize = UDim2.new(0, 0, 0, yEsp + 10)
+    espContent.CanvasSize = UDim2.new(0, 0, 0, y + 10)
     
-    -- COMBAT CONTENT
+    -- ========== TAB 2: COMBAT ==========
     local combatContent = Instance.new("Frame")
     combatContent.Size = UDim2.new(1, 0, 1, 0)
     combatContent.BackgroundTransparency = 1
     combatContent.Visible = false
     combatContent.Parent = contentArea
     
-    local yCombat = 5
+    y = 5
     
-    -- Multi Hit
-    local mhBtn, mhStatus = CreateToggleButton(combatContent, "⚔️ MULTI HIT", yCombat, multiHitEnabled)
-    yCombat = yCombat + 48
+    local mhBtn, mhStatus = CreateToggle(combatContent, "⚔️ MULTI HIT", y, multiHitEnabled)
+    y = y + 48
     
-    -- Range slider
-    local rangeControl = CreateSliderControl(combatContent, "📏 JARAK (M)", yCombat, multiHitRange, 5, 25)
-    yCombat = yCombat + 55
+    local rangeControl = CreateSlider(combatContent, "📏 JARAK (M)", y, multiHitRange, 5, 25)
+    y = y + 55
     
-    -- Targets slider
-    local targetControl = CreateSliderControl(combatContent, "🎯 TARGET", yCombat, multiHitTargets, 1, 25)
-    yCombat = yCombat + 55
+    local targetControl = CreateSlider(combatContent, "🎯 TARGET", y, multiHitTargets, 1, 25)
+    y = y + 55
     
-    -- Separator
     local line = Instance.new("Frame")
     line.Size = UDim2.new(1, 0, 0, 1)
-    line.Position = UDim2.new(0, 0, 0, yCombat)
+    line.Position = UDim2.new(0, 0, 0, y)
     line.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
     line.Parent = combatContent
-    yCombat = yCombat + 15
+    y = y + 15
     
-    -- Multi Damage
-    local mdBtn, mdStatus = CreateToggleButton(combatContent, "💥 MULTI DAMAGE", yCombat, multiDamageEnabled)
-    yCombat = yCombat + 48
+    local mdBtn, mdStatus = CreateToggle(combatContent, "💥 MULTI DAMAGE", y, multiDamageEnabled)
+    y = y + 48
     
-    -- Damage multiplier slider
-    local damageControl = CreateSliderControl(combatContent, "✖️ DAMAGE (x)", yCombat, multiDamageMultiplier, 1, 50)
-    yCombat = yCombat + 55
+    local damageControl = CreateSlider(combatContent, "✖️ DAMAGE (x)", y, multiDamageMultiplier, 1, 50)
+    y = y + 55
     
-    combatContent.CanvasSize = UDim2.new(0, 0, 0, yCombat + 10)
+    combatContent.CanvasSize = UDim2.new(0, 0, 0, y + 10)
     
-    -- MOVE CONTENT
+    -- ========== TAB 3: MOVE ==========
     local moveContent = Instance.new("Frame")
     moveContent.Size = UDim2.new(1, 0, 1, 0)
     moveContent.BackgroundTransparency = 1
     moveContent.Visible = false
     moveContent.Parent = contentArea
     
-    local yMove = 5
+    y = 5
     
-    -- Speed Toggle
-    local speedBtn, speedStatus = CreateToggleButton(moveContent, "⚡ SPEED HACK", yMove, speedEnabled)
-    yMove = yMove + 48
+    local speedBtn, speedStatus = CreateToggle(moveContent, "⚡ SPEED HACK", y, speedEnabled)
+    y = y + 48
     
-    -- Speed slider
-    local speedControl = CreateSliderControl(moveContent, "🏃 KECEPATAN", yMove, speedValue, 16, 100)
-    yMove = yMove + 55
+    local speedControl = CreateSlider(moveContent, "🏃 KECEPATAN", y, speedValue, 16, 100)
+    y = y + 55
     
-    -- Separator
     local line2 = Instance.new("Frame")
     line2.Size = UDim2.new(1, 0, 0, 1)
-    line2.Position = UDim2.new(0, 0, 0, yMove)
+    line2.Position = UDim2.new(0, 0, 0, y)
     line2.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
     line2.Parent = moveContent
-    yMove = yMove + 15
+    y = y + 15
     
-    -- Jump Toggle
-    local jumpBtn, jumpStatus = CreateToggleButton(moveContent, "🦘 JUMP HACK", yMove, jumpEnabled)
-    yMove = yMove + 48
+    local jumpBtn, jumpStatus = CreateToggle(moveContent, "🦘 JUMP HACK", y, jumpEnabled)
+    y = y + 48
     
-    -- Jump slider
-    local jumpControl = CreateSliderControl(moveContent, "📈 KETINGGIAN", yMove, jumpValue, 50, 100)
-    yMove = yMove + 55
+    local jumpControl = CreateSlider(moveContent, "📈 KETINGGIAN", y, jumpValue, 50, 100)
+    y = y + 55
     
-    moveContent.CanvasSize = UDim2.new(0, 0, 0, yMove + 10)
+    moveContent.CanvasSize = UDim2.new(0, 0, 0, y + 10)
     
-    -- ========== FUNGSI CREATE UI ==========
-    function CreateToggleButton(parent, text, yPos, state)
+    -- ========== FUNGSI CREATE UI ELEMENT ==========
+    function CreateToggle(parent, text, yPos, state)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, 38)
         btn.Position = UDim2.new(0, 0, 0, yPos)
@@ -335,9 +301,9 @@ local function CreateMainGUI()
         btnCorner.CornerRadius = UDim.new(0, 8)
         btnCorner.Parent = btn
         
-        local padding = Instance.new("UIPadding")
-        padding.PaddingLeft = UDim.new(0, 12)
-        padding.Parent = btn
+        local pad = Instance.new("UIPadding")
+        pad.PaddingLeft = UDim.new(0, 12)
+        pad.Parent = btn
         
         local status = Instance.new("TextLabel")
         status.Size = UDim2.new(0.35, 0, 1, 0)
@@ -353,7 +319,7 @@ local function CreateMainGUI()
         return btn, status
     end
     
-    function CreateSliderControl(parent, label, yPos, value, minVal, maxVal)
+    function CreateSlider(parent, label, yPos, value, minVal, maxVal)
         local frame = Instance.new("Frame")
         frame.Size = UDim2.new(1, 0, 0, 45)
         frame.Position = UDim2.new(0, 0, 0, yPos)
@@ -367,7 +333,7 @@ local function CreateMainGUI()
         corner.Parent = frame
         
         local labelText = Instance.new("TextLabel")
-        labelText.Size = UDim2.new(0.5, 0, 1, 0)
+        labelText.Size = UDim2.new(0.45, 0, 1, 0)
         labelText.Position = UDim2.new(0, 10, 0, 0)
         labelText.Text = label
         labelText.TextColor3 = Color3.fromRGB(200, 200, 220)
@@ -419,9 +385,7 @@ local function CreateMainGUI()
         return {frame = frame, valueText = valueText, minus = minus, plus = plus, min = minVal, max = maxVal, value = value}
     end
     
-    -- ========== BUTTON ACTIONS ==========
-    
-    -- Switch Tab
+    -- ========== TAB SWITCH ==========
     local function SwitchTab(tab)
         activeTab = tab
         espTab.BackgroundColor3 = tab == "esp" and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
@@ -440,12 +404,13 @@ local function CreateMainGUI()
     combatTab.MouseButton1Click:Connect(function() SwitchTab("combat") end)
     moveTab.MouseButton1Click:Connect(function() SwitchTab("move") end)
     
-    -- ESP Buttons
+    -- ========== BUTTON ACTIONS ==========
     masterBtn.MouseButton1Click:Connect(function()
         masterEnabled = not masterEnabled
         masterStatus.Text = masterEnabled and "✅ ON" or "❌ OFF"
         masterStatus.TextColor3 = masterEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
         masterBtn.BackgroundColor3 = masterEnabled and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
+        led.BackgroundColor3 = masterEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
     end)
     
     boxBtn.MouseButton1Click:Connect(function()
@@ -469,7 +434,6 @@ local function CreateMainGUI()
         nameBtn.BackgroundColor3 = espNameEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
     end)
     
-    -- Combat Buttons
     mhBtn.MouseButton1Click:Connect(function()
         multiHitEnabled = not multiHitEnabled
         mhStatus.Text = multiHitEnabled and "✅ ON" or "❌ OFF"
@@ -484,7 +448,6 @@ local function CreateMainGUI()
         mdBtn.BackgroundColor3 = multiDamageEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
     end)
     
-    -- Move Buttons
     speedBtn.MouseButton1Click:Connect(function()
         speedEnabled = not speedEnabled
         speedStatus.Text = speedEnabled and "✅ ON" or "❌ OFF"
@@ -562,54 +525,54 @@ local function CreateMainGUI()
         ApplyJump()
     end)
     
-    -- ========== TOMBOL PEDANG (BISA DIGESER) ==========
-    local dragging = false
+    -- ========== DRAG TOMBOL PEDANG ==========
     local dragStart = nil
     local startPos = nil
+    local isDragging = false
     
-    swordButton.InputBegan:Connect(function(input)
+    swordBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
+            isDragging = true
             dragStart = input.Position
-            startPos = swordButton.Position
+            startPos = swordBtn.Position
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
+                    isDragging = false
                 end
             end)
         end
     end)
     
     UserInputService.InputChanged:Connect(function(input)
-        if not dragging then return end
+        if not isDragging then return end
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            local newX = math.clamp(startPos.X.Offset + delta.X, 0, UDim2.new(1, -60, 0, 0).X.Offset)
-            local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, UDim2.new(0, 0, 1, -60).Y.Offset)
-            swordButton.Position = UDim2.new(startPos.X.Scale, newX, startPos.Y.Scale, newY)
+            local newX = math.clamp(startPos.X.Offset + delta.X, 0, UDim2.new(1, -55, 0, 0).X.Offset)
+            local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, UDim2.new(0, 0, 1, -55).Y.Offset)
+            swordBtn.Position = UDim2.new(startPos.X.Scale, newX, startPos.Y.Scale, newY)
         end
     end)
     
-    -- MENU DRAG
-    local menuDragging = false
+    -- ========== DRAG MENU ==========
     local menuDragStart = nil
     local menuStartPos = nil
+    local isMenuDragging = false
     
     header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            menuDragging = true
+            isMenuDragging = true
             menuDragStart = input.Position
             menuStartPos = menuFrame.Position
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
-                    menuDragging = false
+                    isMenuDragging = false
                 end
             end)
         end
     end)
     
     UserInputService.InputChanged:Connect(function(input)
-        if not menuDragging then return end
+        if not isMenuDragging then return end
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - menuDragStart
             menuFrame.Position = UDim2.new(
@@ -619,49 +582,38 @@ local function CreateMainGUI()
         end
     end)
     
-    -- Toggle menu ON/OFF
-    local function ToggleMenu()
-        isMenuOpen = not isMenuOpen
-        menuFrame.Visible = isMenuOpen
-        if isMenuOpen then
-            menuFrame:TweenSize(UDim2.new(0, 320, 0, 420), "Out", "Quad", 0.2, true)
-        end
-    end
-    
-    -- Tombol tutup menu
-    closeMenuBtn.MouseButton1Click:Connect(ToggleMenu)
-    
-    -- Tombol pedang untuk toggle menu
-    swordButton.MouseButton1Click:Connect(ToggleMenu)
-    
-    -- Tombol pedang untuk ON/OFF (tap lama) - optional
+    -- ========== TOGGLE MENU ==========
     local pressTime = 0
-    swordButton.MouseButton1Down:Connect(function()
+    local isHolding = false
+    
+    swordBtn.MouseButton1Down:Connect(function()
         pressTime = tick()
+        isHolding = true
     end)
     
-    swordButton.MouseButton1Up:Connect(function()
+    swordBtn.MouseButton1Up:Connect(function()
         local duration = tick() - pressTime
-        if duration > 0.5 then
-            -- Tap lama: ON/OFF semua ESP
-            isSwordEnabled = not isSwordEnabled
-            if isSwordEnabled then
-                statusDot.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-                masterEnabled = true
-                masterStatus.Text = "✅ ON"
-                masterStatus.TextColor3 = Color3.fromRGB(0, 255, 0)
-                masterBtn.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
-            else
-                statusDot.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-                masterEnabled = false
-                masterStatus.Text = "❌ OFF"
-                masterStatus.TextColor3 = Color3.fromRGB(255, 100, 100)
-                masterBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
-            end
+        if duration < 0.3 then
+            -- Tap pendek: toggle menu
+            isMenuOpen = not isMenuOpen
+            menuFrame.Visible = isMenuOpen
+        else
+            -- Tap panjang: toggle master ESP
+            masterEnabled = not masterEnabled
+            masterStatus.Text = masterEnabled and "✅ ON" or "❌ OFF"
+            masterStatus.TextColor3 = masterEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+            masterBtn.BackgroundColor3 = masterEnabled and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
+            led.BackgroundColor3 = masterEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
         end
+        isHolding = false
     end)
     
-    return mainGui
+    closeMenu.MouseButton1Click:Connect(function()
+        isMenuOpen = false
+        menuFrame.Visible = false
+    end)
+    
+    return true
 end
 
 -- ============================================
@@ -824,7 +776,7 @@ end
 -- INITIALIZE
 -- ============================================
 
--- ESP INIT
+-- ESP Init
 for _, player in ipairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         CreateESP(player)
@@ -841,7 +793,7 @@ Players.PlayerRemoving:Connect(RemoveESP)
 
 RunService.RenderStepped:Connect(UpdateAllESP)
 
--- Speed & Jump character added
+-- Speed & Jump Init
 LocalPlayer.CharacterAdded:Connect(function(char)
     char:WaitForChild("Humanoid")
     wait(0.5)
@@ -851,7 +803,11 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     ApplyJump()
 end)
 
--- ============================================
--- START
--- ============================================
-CreateMainGUI()
+-- Create UI
+CreateUI()
+
+print("==========================================")
+print("ZEFF VORTEX - SCRIPT LOADED SUCCESSFULLY")
+print("Tombol pedang ada di kanan bawah")
+print("Tap = Buka menu | Hold = ON/OFF ESP")
+print("==========================================")

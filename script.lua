@@ -1,9 +1,8 @@
 -- ============================================
--- ZEFF VORTEX - FULL SCRIPT
--- TAB 1: ESP (Box, Line, Name, Ketebalan)
--- TAB 2: MULTI HIT (Radius, Damage, Target)
--- TAB 3: SPEED & JUMP BOOST (1-100x)
--- TOMBOL PEDANG = ON/OFF MULTI HIT
+-- ZEFF VORTEX - FINAL SCRIPT
+-- TOMBOL PEDANG = ON/OFF MULTI HIT SAJA
+-- MENU = TOMBOL TERPISAH UNTUK BUKA MENU
+-- FITUR: ESP + MULTI HIT (HITS PER SECOND) + BOOST
 -- ============================================
 
 local Players = game:GetService("Players")
@@ -30,7 +29,8 @@ local multiHitEnabled = false
 local multiHitRange = 20
 local multiHitDamage = 10
 local multiHitTargets = 10
-local targetMode = "players" -- "players" or "all"
+local multiHitHitsPerSec = 5  -- 1-10x per detik
+local targetMode = "players"
 
 -- ============================================
 -- VARIABEL SPEED & JUMP
@@ -47,6 +47,7 @@ local originalJumpPower = 50
 -- ============================================
 local mainGui = nil
 local swordBtn = nil
+local menuBtn = nil
 local menuFrame = nil
 local isMenuOpen = false
 local activeTab = "esp"
@@ -66,7 +67,7 @@ local function CreateUI()
         mainGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     end
     
-    -- ========== TOMBOL PEDANG ==========
+    -- ========== TOMBOL PEDANG (ON/OFF MULTI HIT) ==========
     swordBtn = Instance.new("TextButton")
     swordBtn.Size = UDim2.new(0, 50, 0, 50)
     swordBtn.Position = UDim2.new(1, -65, 1, -180)
@@ -82,7 +83,7 @@ local function CreateUI()
     btnCorner.CornerRadius = UDim.new(0, 25)
     btnCorner.Parent = swordBtn
     
-    -- LED indicator
+    -- LED indicator (hijau = ON, merah = OFF)
     local led = Instance.new("Frame")
     led.Size = UDim2.new(0, 10, 0, 10)
     led.Position = UDim2.new(1, -12, 1, -12)
@@ -93,6 +94,22 @@ local function CreateUI()
     local ledCorner = Instance.new("UICorner")
     ledCorner.CornerRadius = UDim.new(1, 0)
     ledCorner.Parent = led
+    
+    -- ========== TOMBOL MENU (BUKA MENU) ==========
+    menuBtn = Instance.new("TextButton")
+    menuBtn.Size = UDim2.new(0, 40, 0, 40)
+    menuBtn.Position = UDim2.new(1, -115, 1, -180)
+    menuBtn.Text = "📋"
+    menuBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    menuBtn.TextSize = 20
+    menuBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    menuBtn.BackgroundTransparency = 0.2
+    menuBtn.BorderSizePixel = 0
+    menuBtn.Parent = mainGui
+    
+    local menuBtnCorner = Instance.new("UICorner")
+    menuBtnCorner.CornerRadius = UDim.new(0, 20)
+    menuBtnCorner.Parent = menuBtn
     
     -- ========== MENU FRAME ==========
     menuFrame = Instance.new("Frame")
@@ -229,8 +246,8 @@ local function CreateUI()
     
     y = 5
     
-    local mhBtn, mhStatus = CreateToggle(combatContent, "⚔️ MULTI HIT", y, multiHitEnabled)
-    y = y + 48
+    local mhStatusLabel = CreateInfoBox(combatContent, "⚔️ MULTI HIT STATUS", y, multiHitEnabled)
+    y = y + 55
     
     local radiusControl = CreateSlider(combatContent, "📏 RADIUS (M)", y, multiHitRange, 5, 20, "int")
     y = y + 55
@@ -239,6 +256,9 @@ local function CreateUI()
     y = y + 55
     
     local targetControl = CreateSlider(combatContent, "🎯 JUMLAH TARGET", y, multiHitTargets, 1, 20, "int")
+    y = y + 55
+    
+    local hitsControl = CreateSlider(combatContent, "⚡ SERANGAN/DETIK", y, multiHitHitsPerSec, 1, 10, "int")
     y = y + 55
     
     -- Target Mode
@@ -314,6 +334,44 @@ local function CreateUI()
     moveContent.CanvasSize = UDim2.new(0, 0, 0, y + 10)
     
     -- ========== FUNGSI CREATE UI ==========
+    function CreateInfoBox(parent, text, yPos, state)
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(1, 0, 0, 40)
+        frame.Position = UDim2.new(0, 0, 0, yPos)
+        frame.BackgroundColor3 = state and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+        frame.BackgroundTransparency = 0
+        frame.BorderSizePixel = 0
+        frame.Parent = parent
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 8)
+        corner.Parent = frame
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.6, 0, 1, 0)
+        label.Position = UDim2.new(0, 12, 0, 0)
+        label.Text = text
+        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 12
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = frame
+        
+        local status = Instance.new("TextLabel")
+        status.Size = UDim2.new(0.35, 0, 1, 0)
+        status.Position = UDim2.new(0.65, 0, 0, 0)
+        status.Text = state and "✅ ACTIVE" or "❌ INACTIVE"
+        status.TextColor3 = state and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+        status.BackgroundTransparency = 1
+        status.Font = Enum.Font.GothamBold
+        status.TextSize = 11
+        status.TextXAlignment = Enum.TextXAlignment.Right
+        status.Parent = frame
+        
+        return {frame = frame, status = status}
+    end
+    
     function CreateToggle(parent, text, yPos, state)
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, 38)
@@ -440,9 +498,6 @@ local function CreateUI()
         masterStatus.Text = masterEnabled and "✅ ON" or "❌ OFF"
         masterStatus.TextColor3 = masterEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
         masterBtn.BackgroundColor3 = masterEnabled and Color3.fromRGB(155, 0, 255) or Color3.fromRGB(35, 35, 50)
-        if not masterEnabled then
-            led.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-        end
     end)
     
     boxBtn.MouseButton1Click:Connect(function()
@@ -477,15 +532,7 @@ local function CreateUI()
         RefreshESP()
     end)
     
-    -- Multi Hit Actions
-    mhBtn.MouseButton1Click:Connect(function()
-        multiHitEnabled = not multiHitEnabled
-        mhStatus.Text = multiHitEnabled and "✅ ON" or "❌ OFF"
-        mhStatus.TextColor3 = multiHitEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
-        mhBtn.BackgroundColor3 = multiHitEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
-        led.BackgroundColor3 = multiHitEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-    end)
-    
+    -- Multi Hit Sliders
     radiusControl.minus.MouseButton1Click:Connect(function()
         multiHitRange = math.max(5, multiHitRange - 1)
         radiusControl.valueText.Text = tostring(multiHitRange)
@@ -511,6 +558,15 @@ local function CreateUI()
     targetControl.plus.MouseButton1Click:Connect(function()
         multiHitTargets = math.min(20, multiHitTargets + 1)
         targetControl.valueText.Text = tostring(multiHitTargets)
+    end)
+    
+    hitsControl.minus.MouseButton1Click:Connect(function()
+        multiHitHitsPerSec = math.max(1, multiHitHitsPerSec - 1)
+        hitsControl.valueText.Text = tostring(multiHitHitsPerSec)
+    end)
+    hitsControl.plus.MouseButton1Click:Connect(function()
+        multiHitHitsPerSec = math.min(10, multiHitHitsPerSec + 1)
+        hitsControl.valueText.Text = tostring(multiHitHitsPerSec)
     end)
     
     modeValue.MouseButton1Click:Connect(function()
@@ -619,20 +675,55 @@ local function CreateUI()
         end
     end)
     
-    -- ========== TOGGLE MENU (Double tap) ==========
-    local lastTap = 0
-    swordBtn.MouseButton1Click:Connect(function()
-        local now = tick()
-        if now - lastTap < 0.3 then
-            isMenuOpen = not isMenuOpen
-            menuFrame.Visible = isMenuOpen
+    -- ========== DRAG TOMBOL MENU ==========
+    local menuBtnDragStart = nil
+    local menuBtnStartPos = nil
+    local isMenuBtnDragging = false
+    
+    menuBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isMenuBtnDragging = true
+            menuBtnDragStart = input.Position
+            menuBtnStartPos = menuBtn.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    isMenuBtnDragging = false
+                end
+            end)
         end
-        lastTap = now
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if not isMenuBtnDragging then return end
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - menuBtnDragStart
+            local newX = math.clamp(menuBtnStartPos.X.Offset + delta.X, 0, UDim2.new(1, -55, 0, 0).X.Offset)
+            local newY = math.clamp(menuBtnStartPos.Y.Offset + delta.Y, 0, UDim2.new(0, 0, 1, -55).Y.Offset)
+            menuBtn.Position = UDim2.new(menuBtnStartPos.X.Scale, newX, menuBtnStartPos.Y.Scale, newY)
+        end
+    end)
+    
+    -- ========== TOMBOL MENU BUKA MENU ==========
+    menuBtn.MouseButton1Click:Connect(function()
+        isMenuOpen = not isMenuOpen
+        menuFrame.Visible = isMenuOpen
     end)
     
     closeBtn.MouseButton1Click:Connect(function()
         isMenuOpen = false
         menuFrame.Visible = false
+    end)
+    
+    -- ========== TOMBOL PEDANG ON/OFF MULTI HIT ==========
+    swordBtn.MouseButton1Click:Connect(function()
+        multiHitEnabled = not multiHitEnabled
+        led.BackgroundColor3 = multiHitEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        
+        if mhStatusLabel and mhStatusLabel.status then
+            mhStatusLabel.status.Text = multiHitEnabled and "✅ ACTIVE" or "❌ INACTIVE"
+            mhStatusLabel.status.TextColor3 = multiHitEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 100, 100)
+            mhStatusLabel.frame.BackgroundColor3 = multiHitEnabled and Color3.fromRGB(80, 0, 120) or Color3.fromRGB(35, 35, 50)
+        end
     end)
     
     return true
@@ -795,7 +886,7 @@ local function ApplyJump()
 end
 
 -- ============================================
--- MULTI HIT FUNCTION
+-- MULTI HIT FUNCTION (Dengan Hits Per Second)
 -- ============================================
 local function GetTargets()
     local targets = {}
@@ -827,7 +918,6 @@ local function GetTargets()
             end
         end
     else
-        -- Scan untuk entity
         local function ScanDescendants(instance)
             for _, child in ipairs(instance:GetChildren()) do
                 if child:IsA("Model") and child ~= char then
@@ -929,41 +1019,30 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     ApplyJump()
 end)
 
--- Multi Hit Loop
-local lastAttack = 0
-local function CheckForAttack()
+-- Multi Hit Loop dengan Hits Per Second
+local lastHitTime = 0
+local function MultiHitLoop()
     while true do
-        wait(0.05)
         if multiHitEnabled then
-            if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-                local now = tick()
-                if now - lastAttack > 0.1 then
-                    DoMultiHit()
-                    lastAttack = now
-                end
-            end
-            
-            for _, touch in ipairs(UserInputService:GetTouchPositions()) do
-                if touch then
-                    local now = tick()
-                    if now - lastAttack > 0.1 then
-                        DoMultiHit()
-                        lastAttack = now
-                    end
-                end
+            local now = tick()
+            local interval = 1 / multiHitHitsPerSec
+            if now - lastHitTime >= interval then
+                DoMultiHit()
+                lastHitTime = now
             end
         end
+        wait(0.01)
     end
 end
 
-coroutine.wrap(CheckForAttack)()
+coroutine.wrap(MultiHitLoop)()
 
 -- Create UI
 CreateUI()
 
 print("==========================================")
 print("ZEFF VORTEX - FULL SCRIPT LOADED")
-print("Tombol pedang = ON/OFF Multi Hit")
-print("Double tap tombol = Buka menu")
+print("Tombol pedang = ON/OFF MULTI HIT")
+print("Tombol 📋 = BUKA MENU")
 print("3 TAB: ESP | MULTI HIT | BOOST")
 print("==========================================")

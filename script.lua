@@ -1,7 +1,8 @@
 -- ========================================
--- VORTEX EVIL - FINAL FIXED
--- SEMUA TOMBOL BERUBAH WARNA (HIJAU/MERAH)
--- SCROLL SAMPE PALING BAWAH (1300)
+-- VORTEX EVIL - ULTIMATE FIXED
+-- SEMUA TOMBOL BERUBAH WARNA
+-- UKURAN KECIL (160x450)
+-- SCROLL PANJANG 1300
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -19,11 +20,11 @@ local espName = false
 local espThick = 2
 local espColor = Color3.fromRGB(155, 0, 255)
 
--- WALLHACK (NOCLIP)
+-- WALLHACK
 local noclipEnabled = false
 local noclipConnection = nil
 
--- GOD MODE (ANTI MATI UNIVERSAL)
+-- GOD MODE
 local godModeEnabled = false
 local godModeConnection = nil
 
@@ -32,7 +33,7 @@ local autoHit = false
 local hitRange = 100
 local hitDamage = 999
 
--- SPEED JUMP BOOST
+-- SPEED JUMP
 local speedBoost = false
 local speedValue = 200
 local jumpBoost = false
@@ -148,7 +149,7 @@ local function RefreshESP()
     end
 end
 
--- ========== WALLHACK (NOCLIP) ==========
+-- ========== WALLHACK ==========
 local function EnableNoclip()
     if noclipConnection then
         noclipConnection:Disconnect()
@@ -189,21 +190,16 @@ local function ToggleNoclip()
     
     if noclipEnabled then
         EnableNoclip()
-        noclipBtn.Text = "WALLHACK: ON"
         noclipBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        statusText.Text = "🪄 WALLHACK ON - TEMBUS TEMBOK!"
+        noclipBtn.Text = "WALLHACK: ON"
     else
         DisableNoclip()
-        noclipBtn.Text = "WALLHACK: OFF"
         noclipBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        statusText.Text = "🪄 WALLHACK OFF"
+        noclipBtn.Text = "WALLHACK: OFF"
     end
-    statusText.TextColor3 = Color3.fromRGB(0,255,0)
-    task.wait(1)
-    statusText.Text = "✓ READY"
 end
 
--- ========== GOD MODE UNIVERSAL ==========
+-- ========== GOD MODE ==========
 local function EnableGodMode()
     if godModeConnection then
         godModeConnection:Disconnect()
@@ -251,18 +247,13 @@ local function ToggleGodMode()
     
     if godModeEnabled then
         EnableGodMode()
-        godModeBtn.Text = "GOD MODE: ON"
         godModeBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        statusText.Text = "🛡️ GOD MODE ON - TAK BISA MATI!"
+        godModeBtn.Text = "GOD MODE: ON"
     else
         DisableGodMode()
-        godModeBtn.Text = "GOD MODE: OFF"
         godModeBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        statusText.Text = "🛡️ GOD MODE OFF"
+        godModeBtn.Text = "GOD MODE: OFF"
     end
-    statusText.TextColor3 = Color3.fromRGB(0,255,0)
-    task.wait(1)
-    statusText.Text = "✓ READY"
 end
 
 -- ========== AUTO HIT ==========
@@ -320,16 +311,20 @@ end
 
 local function ToggleAutoHit()
     autoHit = not autoHit
-    autoBtn.Text = autoHit and "AUTO HIT: ON" or "AUTO HIT: OFF"
-    autoBtn.BackgroundColor3 = autoHit and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
-    autoStatus.Text = autoHit and "● ACTIVE" or "○ INACTIVE"
-    autoStatus.TextColor3 = autoHit and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,100,100)
-    attackBtn.BackgroundColor3 = autoHit and Color3.fromRGB(0,120,0) or Color3.fromRGB(200,0,0)
-    statusText.Text = autoHit and "⚔️ AUTO HIT ACTIVE" or "⚔️ AUTO HIT OFF"
-    statusText.TextColor3 = autoHit and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,255,0)
-    task.wait(0.5)
-    statusText.Text = "✓ READY"
-    statusText.TextColor3 = Color3.fromRGB(0,255,0)
+    
+    if autoHit then
+        autoBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        autoBtn.Text = "AUTO HIT: ON"
+        autoStatus.Text = "● ACTIVE"
+        autoStatus.TextColor3 = Color3.fromRGB(0,255,0)
+        attackBtn.BackgroundColor3 = Color3.fromRGB(0,120,0)
+    else
+        autoBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        autoBtn.Text = "AUTO HIT: OFF"
+        autoStatus.Text = "○ INACTIVE"
+        autoStatus.TextColor3 = Color3.fromRGB(255,100,100)
+        attackBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+    end
 end
 
 -- ========== SPEED JUMP ==========
@@ -349,51 +344,77 @@ end
 
 local function ToggleSpeed()
     speedBoost = not speedBoost
-    speedBtn.Text = speedBoost and "SPEED: ON" or "SPEED: OFF"
-    speedBtn.BackgroundColor3 = speedBoost and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
+    
+    if speedBoost then
+        speedBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        speedBtn.Text = "SPEED: ON"
+    else
+        speedBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        speedBtn.Text = "SPEED: OFF"
+    end
     ApplySpeed()
-    statusText.Text = speedBoost and "🏃 SPEED BOOST ON" or "🏃 SPEED BOOST OFF"
-    statusText.TextColor3 = speedBoost and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,255,0)
-    task.wait(0.5)
-    statusText.Text = "✓ READY"
-    statusText.TextColor3 = Color3.fromRGB(0,255,0)
 end
 
 local function ToggleJump()
     jumpBoost = not jumpBoost
-    jumpBtn.Text = jumpBoost and "JUMP: ON" or "JUMP: OFF"
-    jumpBtn.BackgroundColor3 = jumpBoost and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
+    
+    if jumpBoost then
+        jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        jumpBtn.Text = "JUMP: ON"
+    else
+        jumpBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        jumpBtn.Text = "JUMP: OFF"
+    end
     ApplyJump()
-    statusText.Text = jumpBoost and "🦘 JUMP BOOST ON" or "🦘 JUMP BOOST OFF"
-    statusText.TextColor3 = jumpBoost and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,255,0)
-    task.wait(0.5)
-    statusText.Text = "✓ READY"
-    statusText.TextColor3 = Color3.fromRGB(0,255,0)
 end
 
--- ========== UPDATE FUNGSI ESP ==========
+-- ========== UPDATE ESP ==========
 local function UpdateMaster()
     masterESP = not masterESP
-    masterBtn.Text = masterESP and "MASTER ESP: ON" or "MASTER ESP: OFF"
-    masterBtn.BackgroundColor3 = masterESP and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
+    
+    if masterESP then
+        masterBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        masterBtn.Text = "MASTER ESP: ON"
+    else
+        masterBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        masterBtn.Text = "MASTER ESP: OFF"
+    end
 end
 
 local function UpdateBox()
     espBox = not espBox
-    boxBtn.Text = espBox and "BOX ESP: ON" or "BOX ESP: OFF"
-    boxBtn.BackgroundColor3 = espBox and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
+    
+    if espBox then
+        boxBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        boxBtn.Text = "BOX ESP: ON"
+    else
+        boxBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        boxBtn.Text = "BOX ESP: OFF"
+    end
 end
 
 local function UpdateTracer()
     espTracer = not espTracer
-    tracerBtn.Text = espTracer and "TRACER ESP: ON" or "TRACER ESP: OFF"
-    tracerBtn.BackgroundColor3 = espTracer and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
+    
+    if espTracer then
+        tracerBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        tracerBtn.Text = "TRACER ESP: ON"
+    else
+        tracerBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        tracerBtn.Text = "TRACER ESP: OFF"
+    end
 end
 
 local function UpdateName()
     espName = not espName
-    nameBtn.Text = espName and "NAME ESP: ON" or "NAME ESP: OFF"
-    nameBtn.BackgroundColor3 = espName and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
+    
+    if espName then
+        nameBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+        nameBtn.Text = "NAME ESP: ON"
+    else
+        nameBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        nameBtn.Text = "NAME ESP: OFF"
+    end
 end
 
 -- ========== BUAT GUI ==========
@@ -402,9 +423,10 @@ gui.Name = "VortexFinal"
 gui.ResetOnSpawn = false
 gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+-- FRAME UKURAN KECIL (160 x 450)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 180, 0, 500)
-frame.Position = UDim2.new(0.5, -90, 0.02, 0)
+frame.Size = UDim2.new(0, 160, 0, 450)
+frame.Position = UDim2.new(0.5, -80, 0.02, 0)
 frame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
 frame.BackgroundTransparency = 0
 frame.BorderSizePixel = 0
@@ -437,26 +459,26 @@ title.TextSize = 11
 title.Parent = header
 
 local minBtn = Instance.new("TextButton")
-minBtn.Size = UDim2.new(0, 20, 0, 20)
-minBtn.Position = UDim2.new(1, -45, 0.5, -10)
+minBtn.Size = UDim2.new(0, 25, 0, 25)
+minBtn.Position = UDim2.new(1, -50, 0.5, -12.5)
 minBtn.Text = "-"
 minBtn.TextColor3 = Color3.fromRGB(255,255,255)
 minBtn.BackgroundTransparency = 1
 minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 12
+minBtn.TextSize = 14
 minBtn.Parent = header
 
 local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 20, 0, 20)
-closeBtn.Position = UDim2.new(1, -22, 0.5, -10)
+closeBtn.Size = UDim2.new(0, 25, 0, 25)
+closeBtn.Position = UDim2.new(1, -25, 0.5, -12.5)
 closeBtn.Text = "X"
 closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
 closeBtn.BackgroundTransparency = 1
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 10
+closeBtn.TextSize = 12
 closeBtn.Parent = header
 
--- SCROLL (CanvasSize 1300 - SAMPE PALING BAWAH)
+-- SCROLL
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(1, -6, 1, -36)
 scroll.Position = UDim2.new(0, 3, 0, 32)
@@ -550,8 +572,8 @@ thickLabel.TextSize = 8
 thickLabel.Parent = scroll
 
 local thickMinus = Instance.new("TextButton")
-thickMinus.Size = UDim2.new(0, 20, 0, 20)
-thickMinus.Position = UDim2.new(1, -45, 0, y)
+thickMinus.Size = UDim2.new(0, 18, 0, 18)
+thickMinus.Position = UDim2.new(1, -40, 0, y)
 thickMinus.Text = "-"
 thickMinus.TextColor3 = Color3.fromRGB(255,255,255)
 thickMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -563,8 +585,8 @@ tmCorner.CornerRadius = UDim.new(0, 3)
 tmCorner.Parent = thickMinus
 
 local thickPlus = Instance.new("TextButton")
-thickPlus.Size = UDim2.new(0, 20, 0, 20)
-thickPlus.Position = UDim2.new(1, -22, 0, y)
+thickPlus.Size = UDim2.new(0, 18, 0, 18)
+thickPlus.Position = UDim2.new(1, -20, 0, y)
 thickPlus.Text = "+"
 thickPlus.TextColor3 = Color3.fromRGB(255,255,255)
 thickPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -576,7 +598,7 @@ tpCorner.CornerRadius = UDim.new(0, 3)
 tpCorner.Parent = thickPlus
 y = y + 26
 
--- ===== WALLHACK SECTION =====
+-- ===== WALLHACK =====
 local wallTitle = Instance.new("TextLabel")
 wallTitle.Size = UDim2.new(1, -6, 0, 16)
 wallTitle.Position = UDim2.new(0, 3, 0, y)
@@ -589,7 +611,7 @@ wallTitle.Parent = scroll
 y = y + 18
 
 local noclipBtn = Instance.new("TextButton")
-noclipBtn.Size = UDim2.new(1, -6, 0, 30)
+noclipBtn.Size = UDim2.new(1, -6, 0, 28)
 noclipBtn.Position = UDim2.new(0, 3, 0, y)
 noclipBtn.Text = "WALLHACK: OFF"
 noclipBtn.TextColor3 = Color3.fromRGB(255,255,255)
@@ -600,9 +622,9 @@ noclipBtn.Parent = scroll
 local wCorner = Instance.new("UICorner")
 wCorner.CornerRadius = UDim.new(0, 5)
 wCorner.Parent = noclipBtn
-y = y + 34
+y = y + 32
 
--- ===== GOD MODE SECTION =====
+-- ===== GOD MODE =====
 local godTitle = Instance.new("TextLabel")
 godTitle.Size = UDim2.new(1, -6, 0, 16)
 godTitle.Position = UDim2.new(0, 3, 0, y)
@@ -615,7 +637,7 @@ godTitle.Parent = scroll
 y = y + 18
 
 local godModeBtn = Instance.new("TextButton")
-godModeBtn.Size = UDim2.new(1, -6, 0, 30)
+godModeBtn.Size = UDim2.new(1, -6, 0, 28)
 godModeBtn.Position = UDim2.new(0, 3, 0, y)
 godModeBtn.Text = "GOD MODE: OFF"
 godModeBtn.TextColor3 = Color3.fromRGB(255,255,255)
@@ -626,9 +648,9 @@ godModeBtn.Parent = scroll
 local gCorner = Instance.new("UICorner")
 gCorner.CornerRadius = UDim.new(0, 5)
 gCorner.Parent = godModeBtn
-y = y + 34
+y = y + 32
 
--- ===== AUTO HIT SECTION =====
+-- ===== AUTO HIT =====
 local hitTitle = Instance.new("TextLabel")
 hitTitle.Size = UDim2.new(1, -6, 0, 16)
 hitTitle.Position = UDim2.new(0, 3, 0, y)
@@ -641,7 +663,7 @@ hitTitle.Parent = scroll
 y = y + 18
 
 local attackBtn = Instance.new("TextButton")
-attackBtn.Size = UDim2.new(1, -6, 0, 34)
+attackBtn.Size = UDim2.new(1, -6, 0, 32)
 attackBtn.Position = UDim2.new(0, 3, 0, y)
 attackBtn.Text = "⚔️ SERANG ⚔️"
 attackBtn.TextColor3 = Color3.fromRGB(255,255,255)
@@ -652,7 +674,7 @@ attackBtn.Parent = scroll
 local aCorner = Instance.new("UICorner")
 aCorner.CornerRadius = UDim.new(0, 5)
 aCorner.Parent = attackBtn
-y = y + 38
+y = y + 36
 
 local autoBtn = Instance.new("TextButton")
 autoBtn.Size = UDim2.new(1, -6, 0, 24)
@@ -679,7 +701,7 @@ autoStatus.TextSize = 7
 autoStatus.Parent = scroll
 y = y + 16
 
--- Radius Slider
+-- Radius
 local radiusLabel = Instance.new("TextLabel")
 radiusLabel.Size = UDim2.new(0.5, 0, 0, 22)
 radiusLabel.Position = UDim2.new(0, 3, 0, y)
@@ -691,8 +713,8 @@ radiusLabel.TextSize = 8
 radiusLabel.Parent = scroll
 
 local radiusMinus = Instance.new("TextButton")
-radiusMinus.Size = UDim2.new(0, 20, 0, 20)
-radiusMinus.Position = UDim2.new(1, -45, 0, y)
+radiusMinus.Size = UDim2.new(0, 18, 0, 18)
+radiusMinus.Position = UDim2.new(1, -40, 0, y)
 radiusMinus.Text = "-"
 radiusMinus.TextColor3 = Color3.fromRGB(255,255,255)
 radiusMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -704,8 +726,8 @@ rmCorner.CornerRadius = UDim.new(0, 3)
 rmCorner.Parent = radiusMinus
 
 local radiusPlus = Instance.new("TextButton")
-radiusPlus.Size = UDim2.new(0, 20, 0, 20)
-radiusPlus.Position = UDim2.new(1, -22, 0, y)
+radiusPlus.Size = UDim2.new(0, 18, 0, 18)
+radiusPlus.Position = UDim2.new(1, -20, 0, y)
 radiusPlus.Text = "+"
 radiusPlus.TextColor3 = Color3.fromRGB(255,255,255)
 radiusPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -717,7 +739,7 @@ rpCorner.CornerRadius = UDim.new(0, 3)
 rpCorner.Parent = radiusPlus
 y = y + 26
 
--- Damage Slider
+-- Damage
 local damageLabel = Instance.new("TextLabel")
 damageLabel.Size = UDim2.new(0.5, 0, 0, 22)
 damageLabel.Position = UDim2.new(0, 3, 0, y)
@@ -729,8 +751,8 @@ damageLabel.TextSize = 8
 damageLabel.Parent = scroll
 
 local damageMinus = Instance.new("TextButton")
-damageMinus.Size = UDim2.new(0, 20, 0, 20)
-damageMinus.Position = UDim2.new(1, -45, 0, y)
+damageMinus.Size = UDim2.new(0, 18, 0, 18)
+damageMinus.Position = UDim2.new(1, -40, 0, y)
 damageMinus.Text = "-"
 damageMinus.TextColor3 = Color3.fromRGB(255,255,255)
 damageMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -742,8 +764,8 @@ dmCorner.CornerRadius = UDim.new(0, 3)
 dmCorner.Parent = damageMinus
 
 local damagePlus = Instance.new("TextButton")
-damagePlus.Size = UDim2.new(0, 20, 0, 20)
-damagePlus.Position = UDim2.new(1, -22, 0, y)
+damagePlus.Size = UDim2.new(0, 18, 0, 18)
+damagePlus.Position = UDim2.new(1, -20, 0, y)
 damagePlus.Text = "+"
 damagePlus.TextColor3 = Color3.fromRGB(255,255,255)
 damagePlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -755,7 +777,7 @@ dpCorner.CornerRadius = UDim.new(0, 3)
 dpCorner.Parent = damagePlus
 y = y + 26
 
--- ===== BOOST SECTION =====
+-- ===== BOOST =====
 local boostTitle = Instance.new("TextLabel")
 boostTitle.Size = UDim2.new(1, -6, 0, 16)
 boostTitle.Position = UDim2.new(0, 3, 0, y)
@@ -792,8 +814,8 @@ speedValLabel.TextSize = 8
 speedValLabel.Parent = scroll
 
 local speedValMinus = Instance.new("TextButton")
-speedValMinus.Size = UDim2.new(0, 20, 0, 20)
-speedValMinus.Position = UDim2.new(1, -45, 0, y)
+speedValMinus.Size = UDim2.new(0, 18, 0, 18)
+speedValMinus.Position = UDim2.new(1, -40, 0, y)
 speedValMinus.Text = "-"
 speedValMinus.TextColor3 = Color3.fromRGB(255,255,255)
 speedValMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -805,8 +827,8 @@ svmCorner.CornerRadius = UDim.new(0, 3)
 svmCorner.Parent = speedValMinus
 
 local speedValPlus = Instance.new("TextButton")
-speedValPlus.Size = UDim2.new(0, 20, 0, 20)
-speedValPlus.Position = UDim2.new(1, -22, 0, y)
+speedValPlus.Size = UDim2.new(0, 18, 0, 18)
+speedValPlus.Position = UDim2.new(1, -20, 0, y)
 speedValPlus.Text = "+"
 speedValPlus.TextColor3 = Color3.fromRGB(255,255,255)
 speedValPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -843,8 +865,8 @@ jumpValLabel.TextSize = 8
 jumpValLabel.Parent = scroll
 
 local jumpValMinus = Instance.new("TextButton")
-jumpValMinus.Size = UDim2.new(0, 20, 0, 20)
-jumpValMinus.Position = UDim2.new(1, -45, 0, y)
+jumpValMinus.Size = UDim2.new(0, 18, 0, 18)
+jumpValMinus.Position = UDim2.new(1, -40, 0, y)
 jumpValMinus.Text = "-"
 jumpValMinus.TextColor3 = Color3.fromRGB(255,255,255)
 jumpValMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -856,8 +878,8 @@ jvmCorner.CornerRadius = UDim.new(0, 3)
 jvmCorner.Parent = jumpValMinus
 
 local jumpValPlus = Instance.new("TextButton")
-jumpValPlus.Size = UDim2.new(0, 20, 0, 20)
-jumpValPlus.Position = UDim2.new(1, -22, 0, y)
+jumpValPlus.Size = UDim2.new(0, 18, 0, 18)
+jumpValPlus.Position = UDim2.new(1, -20, 0, y)
 jumpValPlus.Text = "+"
 jumpValPlus.TextColor3 = Color3.fromRGB(255,255,255)
 jumpValPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
@@ -981,12 +1003,12 @@ end)
 local min = false
 minBtn.MouseButton1Click:Connect(function()
     if min then
-        frame.Size = UDim2.new(0, 180, 0, 500)
+        frame.Size = UDim2.new(0, 160, 0, 450)
         scroll.Visible = true
         minBtn.Text = "-"
         min = false
     else
-        frame.Size = UDim2.new(0, 80, 0, 28)
+        frame.Size = UDim2.new(0, 100, 0, 28)
         scroll.Visible = false
         minBtn.Text = "+"
         min = true
@@ -1042,10 +1064,9 @@ end)()
 RunService.RenderStepped:Connect(UpdateESP)
 
 print("========================")
-print("🔥 VORTEX FINAL FIXED 🔥")
-print("✅ SEMUA TOMBOL HIJAU/MERAH")
-print("✅ SCROLL 1300 - SAMPE PALING BAWAH")
-print("✅ ESP BOX WORKING")
-print("✅ WALLHACK + GOD MODE")
-print("✅ AUTO HIT + SPEED + JUMP")
+print("🔥 VORTEX ULTIMATE FIXED 🔥")
+print("✅ UKURAN: 160x450 (KECIL)")
+print("✅ MINIMIZE: 100x28 (BESARAN)")
+print("✅ SEMUA TOMBOL BERUBAH WARNA")
+print("✅ SCROLL 1300 - SAMPE BAWAH")
 print("========================")

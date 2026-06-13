@@ -1,8 +1,7 @@
 -- ========================================
--- VORTEX EVIL - ULTIMATE FIXED
--- SEMUA TOMBOL BERUBAH WARNA
--- UKURAN KECIL (160x450)
--- SCROLL PANJANG 1300
+-- VORTEX SIMPLE - ONLY COLOR CHANGE
+-- HIJAU = ON | MERAH = OFF
+-- UKURAN KECIL, SCROLL PANJANG
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -18,7 +17,6 @@ local espBox = false
 local espTracer = false
 local espName = false
 local espThick = 2
-local espColor = Color3.fromRGB(155, 0, 255)
 
 -- WALLHACK
 local noclipEnabled = false
@@ -49,20 +47,20 @@ local function CreateESP(player)
     
     local box = Drawing.new("Square")
     box.Visible = false
-    box.Color = espColor
+    box.Color = Color3.fromRGB(155,0,255)
     box.Thickness = espThick
     box.Filled = false
     box.Transparency = 0.5
     
     local tracer = Drawing.new("Line")
     tracer.Visible = false
-    tracer.Color = espColor
+    tracer.Color = Color3.fromRGB(155,0,255)
     tracer.Thickness = espThick
     
     local nameTag = Drawing.new("Text")
     nameTag.Visible = false
-    nameTag.Color = espColor
-    nameTag.Size = 12
+    nameTag.Color = Color3.fromRGB(155,0,255)
+    nameTag.Size = 11
     nameTag.Center = true
     nameTag.Outline = true
     nameTag.OutlineColor = Color3.fromRGB(0,0,0)
@@ -136,35 +134,28 @@ end
 local function RefreshESP()
     for _, esp in pairs(espObjects) do
         if esp.box then
-            esp.box.Color = espColor
+            esp.box.Color = Color3.fromRGB(155,0,255)
             esp.box.Thickness = espThick
         end
         if esp.tracer then
-            esp.tracer.Color = espColor
+            esp.tracer.Color = Color3.fromRGB(155,0,255)
             esp.tracer.Thickness = espThick
         end
         if esp.nameTag then
-            esp.nameTag.Color = espColor
+            esp.nameTag.Color = Color3.fromRGB(155,0,255)
         end
     end
 end
 
 -- ========== WALLHACK ==========
 local function EnableNoclip()
-    if noclipConnection then
-        noclipConnection:Disconnect()
-        noclipConnection = nil
-    end
-    
+    if noclipConnection then noclipConnection:Disconnect() end
     noclipConnection = RunService.Stepped:Connect(function()
         if not noclipEnabled then return end
         local char = LocalPlayer.Character
         if not char then return end
-        
         for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
     end)
 end
@@ -174,51 +165,25 @@ local function DisableNoclip()
         noclipConnection:Disconnect()
         noclipConnection = nil
     end
-    
     local char = LocalPlayer.Character
     if char then
         for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-            end
+            if part:IsA("BasePart") then part.CanCollide = true end
         end
-    end
-end
-
-local function ToggleNoclip()
-    noclipEnabled = not noclipEnabled
-    
-    if noclipEnabled then
-        EnableNoclip()
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        noclipBtn.Text = "WALLHACK: ON"
-    else
-        DisableNoclip()
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        noclipBtn.Text = "WALLHACK: OFF"
     end
 end
 
 -- ========== GOD MODE ==========
 local function EnableGodMode()
-    if godModeConnection then
-        godModeConnection:Disconnect()
-        godModeConnection = nil
-    end
-    
+    if godModeConnection then godModeConnection:Disconnect() end
     godModeConnection = RunService.Stepped:Connect(function()
         if not godModeEnabled then return end
         local char = LocalPlayer.Character
         if not char then return end
-        
         local hum = char:FindFirstChild("Humanoid")
         if hum then
-            if hum.Health < hum.MaxHealth then
-                hum.Health = hum.MaxHealth
-            end
-            if hum.Health <= 0 then
-                hum.Health = hum.MaxHealth
-            end
+            if hum.Health < hum.MaxHealth then hum.Health = hum.MaxHealth end
+            if hum.Health <= 0 then hum.Health = hum.MaxHealth end
             hum.BreakJointsOnDeath = false
             if hum:GetState() == Enum.HumanoidStateType.Dead then
                 hum:ChangeState(Enum.HumanoidStateType.Running)
@@ -231,28 +196,6 @@ local function DisableGodMode()
     if godModeConnection then
         godModeConnection:Disconnect()
         godModeConnection = nil
-    end
-    
-    local char = LocalPlayer.Character
-    if char then
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then
-            hum.BreakJointsOnDeath = true
-        end
-    end
-end
-
-local function ToggleGodMode()
-    godModeEnabled = not godModeEnabled
-    
-    if godModeEnabled then
-        EnableGodMode()
-        godModeBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        godModeBtn.Text = "GOD MODE: ON"
-    else
-        DisableGodMode()
-        godModeBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        godModeBtn.Text = "GOD MODE: OFF"
     end
 end
 
@@ -296,7 +239,7 @@ local function ManualAttack()
         for _, h in ipairs(targets) do
             pcall(function() h.Health = h.Health - 999 end)
         end
-        statusText.Text = "⚔️ "..#targets.." TARGETS HIT!"
+        statusText.Text = "⚔️ "..#targets
         statusText.TextColor3 = Color3.fromRGB(0,255,0)
         task.wait(0.5)
         statusText.Text = "✓ READY"
@@ -307,24 +250,6 @@ local function ManualAttack()
         statusText.Text = "✓ READY"
     end
     statusText.TextColor3 = Color3.fromRGB(0,255,0)
-end
-
-local function ToggleAutoHit()
-    autoHit = not autoHit
-    
-    if autoHit then
-        autoBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        autoBtn.Text = "AUTO HIT: ON"
-        autoStatus.Text = "● ACTIVE"
-        autoStatus.TextColor3 = Color3.fromRGB(0,255,0)
-        attackBtn.BackgroundColor3 = Color3.fromRGB(0,120,0)
-    else
-        autoBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        autoBtn.Text = "AUTO HIT: OFF"
-        autoStatus.Text = "○ INACTIVE"
-        autoStatus.TextColor3 = Color3.fromRGB(255,100,100)
-        attackBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
-    end
 end
 
 -- ========== SPEED JUMP ==========
@@ -342,88 +267,111 @@ local function ApplyJump()
     end
 end
 
+-- ========== FUNGSI TOGGLE DENGAN WARNA ==========
+local function ToggleMaster()
+    masterESP = not masterESP
+    masterBtn.BackgroundColor3 = masterESP and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+end
+
+local function ToggleBox()
+    espBox = not espBox
+    boxBtn.BackgroundColor3 = espBox and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+end
+
+local function ToggleTracer()
+    espTracer = not espTracer
+    tracerBtn.BackgroundColor3 = espTracer and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+end
+
+local function ToggleName()
+    espName = not espName
+    nameBtn.BackgroundColor3 = espName and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+end
+
+local function ToggleNoclip()
+    noclipEnabled = not noclipEnabled
+    if noclipEnabled then
+        EnableNoclip()
+        noclipBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+    else
+        DisableNoclip()
+        noclipBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+    end
+end
+
+local function ToggleGod()
+    godModeEnabled = not godModeEnabled
+    if godModeEnabled then
+        EnableGodMode()
+        godModeBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+    else
+        DisableGodMode()
+        godModeBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+    end
+end
+
+local function ToggleAuto()
+    autoHit = not autoHit
+    if autoHit then
+        autoBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+        autoStatus.Text = "● ACTIVE"
+        autoStatus.TextColor3 = Color3.fromRGB(0,255,0)
+        attackBtn.BackgroundColor3 = Color3.fromRGB(0,120,0)
+    else
+        autoBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+        autoStatus.Text = "○ INACTIVE"
+        autoStatus.TextColor3 = Color3.fromRGB(255,100,100)
+        attackBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
+    end
+end
+
 local function ToggleSpeed()
     speedBoost = not speedBoost
-    
-    if speedBoost then
-        speedBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        speedBtn.Text = "SPEED: ON"
-    else
-        speedBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        speedBtn.Text = "SPEED: OFF"
-    end
+    speedBtn.BackgroundColor3 = speedBoost and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
     ApplySpeed()
 end
 
 local function ToggleJump()
     jumpBoost = not jumpBoost
-    
-    if jumpBoost then
-        jumpBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        jumpBtn.Text = "JUMP: ON"
-    else
-        jumpBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        jumpBtn.Text = "JUMP: OFF"
-    end
+    jumpBtn.BackgroundColor3 = jumpBoost and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
     ApplyJump()
 end
 
--- ========== UPDATE ESP ==========
-local function UpdateMaster()
-    masterESP = not masterESP
-    
-    if masterESP then
-        masterBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        masterBtn.Text = "MASTER ESP: ON"
-    else
-        masterBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        masterBtn.Text = "MASTER ESP: OFF"
-    end
+-- ========== SLIDER FUNGSI ==========
+local function UpdateThick(val)
+    espThick = math.max(1, math.min(5, espThick + val))
+    thickLabel.Text = "TEBAL: "..espThick
+    RefreshESP()
 end
 
-local function UpdateBox()
-    espBox = not espBox
-    
-    if espBox then
-        boxBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        boxBtn.Text = "BOX ESP: ON"
-    else
-        boxBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        boxBtn.Text = "BOX ESP: OFF"
-    end
+local function UpdateRadius(val)
+    hitRange = math.max(30, math.min(100, hitRange + val))
+    radiusLabel.Text = "RADIUS: "..hitRange
 end
 
-local function UpdateTracer()
-    espTracer = not espTracer
-    
-    if espTracer then
-        tracerBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        tracerBtn.Text = "TRACER ESP: ON"
-    else
-        tracerBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        tracerBtn.Text = "TRACER ESP: OFF"
-    end
+local function UpdateDamage(val)
+    hitDamage = math.max(100, math.min(999, hitDamage + val))
+    damageLabel.Text = "DAMAGE: "..hitDamage
 end
 
-local function UpdateName()
-    espName = not espName
-    
-    if espName then
-        nameBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        nameBtn.Text = "NAME ESP: ON"
-    else
-        nameBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        nameBtn.Text = "NAME ESP: OFF"
-    end
+local function UpdateSpeedVal(val)
+    speedValue = math.max(25, math.min(999, speedValue + val))
+    speedValLabel.Text = "SPEED: "..speedValue
+    ApplySpeed()
+end
+
+local function UpdateJumpVal(val)
+    jumpValue = math.max(50, math.min(999, jumpValue + val))
+    jumpValLabel.Text = "JUMP: "..jumpValue
+    ApplyJump()
 end
 
 -- ========== BUAT GUI ==========
 local gui = Instance.new("ScreenGui")
-gui.Name = "VortexFinal"
+gui.Name = "VortexSimple"
 gui.ResetOnSpawn = false
 gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- FRAME UKURAN KECIL (160 x 450)
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 160, 0, 450)
 frame.Position = UDim2.new(0.5, -80, 0.02, 0)
@@ -451,7 +399,7 @@ hCorner.Parent = header
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.5, 0, 1, 0)
 title.Position = UDim2.new(0.05, 0, 0, 0)
-title.Text = "⚔️ VORTEX"
+title.Text = "VORTEX"
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
@@ -485,18 +433,18 @@ scroll.Position = UDim2.new(0, 3, 0, 32)
 scroll.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 scroll.BackgroundTransparency = 0
 scroll.BorderSizePixel = 0
-scroll.CanvasSize = UDim2.new(0, 0, 0, 1300)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 1100)
 scroll.ScrollBarThickness = 3
 scroll.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
 scroll.Parent = frame
 
 local y = 3
 
--- ===== ESP SECTION =====
+-- ESP SECTION
 local espTitle = Instance.new("TextLabel")
 espTitle.Size = UDim2.new(1, -6, 0, 16)
 espTitle.Position = UDim2.new(0, 3, 0, y)
-espTitle.Text = "🎮 ESP MENU"
+espTitle.Text = "ESP MENU"
 espTitle.TextColor3 = Color3.fromRGB(155, 0, 255)
 espTitle.BackgroundTransparency = 1
 espTitle.Font = Enum.Font.GothamBold
@@ -504,12 +452,12 @@ espTitle.TextSize = 9
 espTitle.Parent = scroll
 y = y + 18
 
-local masterBtn = Instance.new("TextButton")
+masterBtn = Instance.new("TextButton")
 masterBtn.Size = UDim2.new(1, -6, 0, 24)
 masterBtn.Position = UDim2.new(0, 3, 0, y)
-masterBtn.Text = "MASTER ESP: OFF"
+masterBtn.Text = "MASTER ESP"
 masterBtn.TextColor3 = Color3.fromRGB(255,255,255)
-masterBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+masterBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
 masterBtn.Font = Enum.Font.GothamBold
 masterBtn.TextSize = 8
 masterBtn.Parent = scroll
@@ -518,12 +466,12 @@ mCorner.CornerRadius = UDim.new(0, 4)
 mCorner.Parent = masterBtn
 y = y + 28
 
-local boxBtn = Instance.new("TextButton")
+boxBtn = Instance.new("TextButton")
 boxBtn.Size = UDim2.new(1, -6, 0, 24)
 boxBtn.Position = UDim2.new(0, 3, 0, y)
-boxBtn.Text = "BOX ESP: OFF"
+boxBtn.Text = "BOX ESP"
 boxBtn.TextColor3 = Color3.fromRGB(255,255,255)
-boxBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+boxBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
 boxBtn.Font = Enum.Font.GothamBold
 boxBtn.TextSize = 8
 boxBtn.Parent = scroll
@@ -532,12 +480,12 @@ bCorner.CornerRadius = UDim.new(0, 4)
 bCorner.Parent = boxBtn
 y = y + 28
 
-local tracerBtn = Instance.new("TextButton")
+tracerBtn = Instance.new("TextButton")
 tracerBtn.Size = UDim2.new(1, -6, 0, 24)
 tracerBtn.Position = UDim2.new(0, 3, 0, y)
-tracerBtn.Text = "TRACER ESP: OFF"
+tracerBtn.Text = "TRACER ESP"
 tracerBtn.TextColor3 = Color3.fromRGB(255,255,255)
-tracerBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+tracerBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
 tracerBtn.Font = Enum.Font.GothamBold
 tracerBtn.TextSize = 8
 tracerBtn.Parent = scroll
@@ -546,12 +494,12 @@ tCorner.CornerRadius = UDim.new(0, 4)
 tCorner.Parent = tracerBtn
 y = y + 28
 
-local nameBtn = Instance.new("TextButton")
+nameBtn = Instance.new("TextButton")
 nameBtn.Size = UDim2.new(1, -6, 0, 24)
 nameBtn.Position = UDim2.new(0, 3, 0, y)
-nameBtn.Text = "NAME ESP: OFF"
+nameBtn.Text = "NAME ESP"
 nameBtn.TextColor3 = Color3.fromRGB(255,255,255)
-nameBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+nameBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
 nameBtn.Font = Enum.Font.GothamBold
 nameBtn.TextSize = 8
 nameBtn.Parent = scroll
@@ -561,7 +509,7 @@ nCorner.Parent = nameBtn
 y = y + 28
 
 -- Ketebalan
-local thickLabel = Instance.new("TextLabel")
+thickLabel = Instance.new("TextLabel")
 thickLabel.Size = UDim2.new(0.5, 0, 0, 22)
 thickLabel.Position = UDim2.new(0, 3, 0, y)
 thickLabel.Text = "TEBAL: 2"
@@ -598,11 +546,11 @@ tpCorner.CornerRadius = UDim.new(0, 3)
 tpCorner.Parent = thickPlus
 y = y + 26
 
--- ===== WALLHACK =====
+-- WALLHACK
 local wallTitle = Instance.new("TextLabel")
 wallTitle.Size = UDim2.new(1, -6, 0, 16)
 wallTitle.Position = UDim2.new(0, 3, 0, y)
-wallTitle.Text = "🪄 WALLHACK"
+wallTitle.Text = "WALLHACK"
 wallTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
 wallTitle.BackgroundTransparency = 1
 wallTitle.Font = Enum.Font.GothamBold
@@ -610,12 +558,12 @@ wallTitle.TextSize = 9
 wallTitle.Parent = scroll
 y = y + 18
 
-local noclipBtn = Instance.new("TextButton")
+noclipBtn = Instance.new("TextButton")
 noclipBtn.Size = UDim2.new(1, -6, 0, 28)
 noclipBtn.Position = UDim2.new(0, 3, 0, y)
-noclipBtn.Text = "WALLHACK: OFF"
+noclipBtn.Text = "WALLHACK"
 noclipBtn.TextColor3 = Color3.fromRGB(255,255,255)
-noclipBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+noclipBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
 noclipBtn.Font = Enum.Font.GothamBold
 noclipBtn.TextSize = 8
 noclipBtn.Parent = scroll
@@ -624,11 +572,11 @@ wCorner.CornerRadius = UDim.new(0, 5)
 wCorner.Parent = noclipBtn
 y = y + 32
 
--- ===== GOD MODE =====
+-- GOD MODE
 local godTitle = Instance.new("TextLabel")
 godTitle.Size = UDim2.new(1, -6, 0, 16)
 godTitle.Position = UDim2.new(0, 3, 0, y)
-godTitle.Text = "🛡️ GOD MODE"
+godTitle.Text = "GOD MODE"
 godTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
 godTitle.BackgroundTransparency = 1
 godTitle.Font = Enum.Font.GothamBold
@@ -636,12 +584,12 @@ godTitle.TextSize = 9
 godTitle.Parent = scroll
 y = y + 18
 
-local godModeBtn = Instance.new("TextButton")
+godModeBtn = Instance.new("TextButton")
 godModeBtn.Size = UDim2.new(1, -6, 0, 28)
 godModeBtn.Position = UDim2.new(0, 3, 0, y)
-godModeBtn.Text = "GOD MODE: OFF"
+godModeBtn.Text = "GOD MODE"
 godModeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-godModeBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+godModeBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
 godModeBtn.Font = Enum.Font.GothamBold
 godModeBtn.TextSize = 8
 godModeBtn.Parent = scroll
@@ -650,11 +598,11 @@ gCorner.CornerRadius = UDim.new(0, 5)
 gCorner.Parent = godModeBtn
 y = y + 32
 
--- ===== AUTO HIT =====
+-- AUTO HIT
 local hitTitle = Instance.new("TextLabel")
 hitTitle.Size = UDim2.new(1, -6, 0, 16)
 hitTitle.Position = UDim2.new(0, 3, 0, y)
-hitTitle.Text = "⚔️ AUTO HIT"
+hitTitle.Text = "AUTO HIT"
 hitTitle.TextColor3 = Color3.fromRGB(155, 0, 255)
 hitTitle.BackgroundTransparency = 1
 hitTitle.Font = Enum.Font.GothamBold
@@ -662,7 +610,7 @@ hitTitle.TextSize = 9
 hitTitle.Parent = scroll
 y = y + 18
 
-local attackBtn = Instance.new("TextButton")
+attackBtn = Instance.new("TextButton")
 attackBtn.Size = UDim2.new(1, -6, 0, 32)
 attackBtn.Position = UDim2.new(0, 3, 0, y)
 attackBtn.Text = "⚔️ SERANG ⚔️"
@@ -676,12 +624,12 @@ aCorner.CornerRadius = UDim.new(0, 5)
 aCorner.Parent = attackBtn
 y = y + 36
 
-local autoBtn = Instance.new("TextButton")
+autoBtn = Instance.new("TextButton")
 autoBtn.Size = UDim2.new(1, -6, 0, 24)
 autoBtn.Position = UDim2.new(0, 3, 0, y)
-autoBtn.Text = "AUTO HIT: OFF"
+autoBtn.Text = "AUTO HIT"
 autoBtn.TextColor3 = Color3.fromRGB(255,255,255)
-autoBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+autoBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
 autoBtn.Font = Enum.Font.GothamBold
 autoBtn.TextSize = 8
 autoBtn.Parent = scroll
@@ -690,7 +638,7 @@ auCorner.CornerRadius = UDim.new(0, 4)
 auCorner.Parent = autoBtn
 y = y + 28
 
-local autoStatus = Instance.new("TextLabel")
+autoStatus = Instance.new("TextLabel")
 autoStatus.Size = UDim2.new(1, -6, 0, 14)
 autoStatus.Position = UDim2.new(0, 3, 0, y)
 autoStatus.Text = "○ INACTIVE"
@@ -702,10 +650,10 @@ autoStatus.Parent = scroll
 y = y + 16
 
 -- Radius
-local radiusLabel = Instance.new("TextLabel")
+radiusLabel = Instance.new("TextLabel")
 radiusLabel.Size = UDim2.new(0.5, 0, 0, 22)
 radiusLabel.Position = UDim2.new(0, 3, 0, y)
-radiusLabel.Text = "RADIUS: "..hitRange
+radiusLabel.Text = "RADIUS: 100"
 radiusLabel.TextColor3 = Color3.fromRGB(200,200,220)
 radiusLabel.BackgroundTransparency = 1
 radiusLabel.Font = Enum.Font.GothamBold
@@ -740,10 +688,10 @@ rpCorner.Parent = radiusPlus
 y = y + 26
 
 -- Damage
-local damageLabel = Instance.new("TextLabel")
+damageLabel = Instance.new("TextLabel")
 damageLabel.Size = UDim2.new(0.5, 0, 0, 22)
 damageLabel.Position = UDim2.new(0, 3, 0, y)
-damageLabel.Text = "DAMAGE: "..hitDamage
+damageLabel.Text = "DAMAGE: 999"
 damageLabel.TextColor3 = Color3.fromRGB(200,200,220)
 damageLabel.BackgroundTransparency = 1
 damageLabel.Font = Enum.Font.GothamBold
@@ -777,11 +725,11 @@ dpCorner.CornerRadius = UDim.new(0, 3)
 dpCorner.Parent = damagePlus
 y = y + 26
 
--- ===== BOOST =====
+-- BOOST
 local boostTitle = Instance.new("TextLabel")
 boostTitle.Size = UDim2.new(1, -6, 0, 16)
 boostTitle.Position = UDim2.new(0, 3, 0, y)
-boostTitle.Text = "🏃 BOOST MENU"
+boostTitle.Text = "BOOST MENU"
 boostTitle.TextColor3 = Color3.fromRGB(155, 0, 255)
 boostTitle.BackgroundTransparency = 1
 boostTitle.Font = Enum.Font.GothamBold
@@ -789,12 +737,12 @@ boostTitle.TextSize = 9
 boostTitle.Parent = scroll
 y = y + 18
 
-local speedBtn = Instance.new("TextButton")
+speedBtn = Instance.new("TextButton")
 speedBtn.Size = UDim2.new(1, -6, 0, 24)
 speedBtn.Position = UDim2.new(0, 3, 0, y)
-speedBtn.Text = "SPEED: OFF"
+speedBtn.Text = "SPEED BOOST"
 speedBtn.TextColor3 = Color3.fromRGB(255,255,255)
-speedBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+speedBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
 speedBtn.Font = Enum.Font.GothamBold
 speedBtn.TextSize = 8
 speedBtn.Parent = scroll
@@ -803,49 +751,49 @@ spCorner.CornerRadius = UDim.new(0, 4)
 spCorner.Parent = speedBtn
 y = y + 28
 
-local speedValLabel = Instance.new("TextLabel")
+speedValLabel = Instance.new("TextLabel")
 speedValLabel.Size = UDim2.new(0.5, 0, 0, 22)
 speedValLabel.Position = UDim2.new(0, 3, 0, y)
-speedValLabel.Text = "SPEED: "..speedValue
+speedValLabel.Text = "SPEED: 200"
 speedValLabel.TextColor3 = Color3.fromRGB(200,200,220)
 speedValLabel.BackgroundTransparency = 1
 speedValLabel.Font = Enum.Font.GothamBold
 speedValLabel.TextSize = 8
 speedValLabel.Parent = scroll
 
-local speedValMinus = Instance.new("TextButton")
-speedValMinus.Size = UDim2.new(0, 18, 0, 18)
-speedValMinus.Position = UDim2.new(1, -40, 0, y)
-speedValMinus.Text = "-"
-speedValMinus.TextColor3 = Color3.fromRGB(255,255,255)
-speedValMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-speedValMinus.Font = Enum.Font.GothamBold
-speedValMinus.TextSize = 12
-speedValMinus.Parent = scroll
-local svmCorner = Instance.new("UICorner")
-svmCorner.CornerRadius = UDim.new(0, 3)
-svmCorner.Parent = speedValMinus
+local speedMinus = Instance.new("TextButton")
+speedMinus.Size = UDim2.new(0, 18, 0, 18)
+speedMinus.Position = UDim2.new(1, -40, 0, y)
+speedMinus.Text = "-"
+speedMinus.TextColor3 = Color3.fromRGB(255,255,255)
+speedMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+speedMinus.Font = Enum.Font.GothamBold
+speedMinus.TextSize = 12
+speedMinus.Parent = scroll
+local smCorner = Instance.new("UICorner")
+smCorner.CornerRadius = UDim.new(0, 3)
+smCorner.Parent = speedMinus
 
-local speedValPlus = Instance.new("TextButton")
-speedValPlus.Size = UDim2.new(0, 18, 0, 18)
-speedValPlus.Position = UDim2.new(1, -20, 0, y)
-speedValPlus.Text = "+"
-speedValPlus.TextColor3 = Color3.fromRGB(255,255,255)
-speedValPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-speedValPlus.Font = Enum.Font.GothamBold
-speedValPlus.TextSize = 12
-speedValPlus.Parent = scroll
-local svpCorner = Instance.new("UICorner")
-svpCorner.CornerRadius = UDim.new(0, 3)
-svpCorner.Parent = speedValPlus
+local speedPlus = Instance.new("TextButton")
+speedPlus.Size = UDim2.new(0, 18, 0, 18)
+speedPlus.Position = UDim2.new(1, -20, 0, y)
+speedPlus.Text = "+"
+speedPlus.TextColor3 = Color3.fromRGB(255,255,255)
+speedPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+speedPlus.Font = Enum.Font.GothamBold
+speedPlus.TextSize = 12
+speedPlus.Parent = scroll
+local spCorner2 = Instance.new("UICorner")
+spCorner2.CornerRadius = UDim.new(0, 3)
+spCorner2.Parent = speedPlus
 y = y + 26
 
-local jumpBtn = Instance.new("TextButton")
+jumpBtn = Instance.new("TextButton")
 jumpBtn.Size = UDim2.new(1, -6, 0, 24)
 jumpBtn.Position = UDim2.new(0, 3, 0, y)
-jumpBtn.Text = "JUMP: OFF"
+jumpBtn.Text = "JUMP BOOST"
 jumpBtn.TextColor3 = Color3.fromRGB(255,255,255)
-jumpBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+jumpBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
 jumpBtn.Font = Enum.Font.GothamBold
 jumpBtn.TextSize = 8
 jumpBtn.Parent = scroll
@@ -854,45 +802,45 @@ jpCorner.CornerRadius = UDim.new(0, 4)
 jpCorner.Parent = jumpBtn
 y = y + 28
 
-local jumpValLabel = Instance.new("TextLabel")
+jumpValLabel = Instance.new("TextLabel")
 jumpValLabel.Size = UDim2.new(0.5, 0, 0, 22)
 jumpValLabel.Position = UDim2.new(0, 3, 0, y)
-jumpValLabel.Text = "JUMP: "..jumpValue
+jumpValLabel.Text = "JUMP: 200"
 jumpValLabel.TextColor3 = Color3.fromRGB(200,200,220)
 jumpValLabel.BackgroundTransparency = 1
 jumpValLabel.Font = Enum.Font.GothamBold
 jumpValLabel.TextSize = 8
 jumpValLabel.Parent = scroll
 
-local jumpValMinus = Instance.new("TextButton")
-jumpValMinus.Size = UDim2.new(0, 18, 0, 18)
-jumpValMinus.Position = UDim2.new(1, -40, 0, y)
-jumpValMinus.Text = "-"
-jumpValMinus.TextColor3 = Color3.fromRGB(255,255,255)
-jumpValMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-jumpValMinus.Font = Enum.Font.GothamBold
-jumpValMinus.TextSize = 12
-jumpValMinus.Parent = scroll
-local jvmCorner = Instance.new("UICorner")
-jvmCorner.CornerRadius = UDim.new(0, 3)
-jvmCorner.Parent = jumpValMinus
+local jumpMinus = Instance.new("TextButton")
+jumpMinus.Size = UDim2.new(0, 18, 0, 18)
+jumpMinus.Position = UDim2.new(1, -40, 0, y)
+jumpMinus.Text = "-"
+jumpMinus.TextColor3 = Color3.fromRGB(255,255,255)
+jumpMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+jumpMinus.Font = Enum.Font.GothamBold
+jumpMinus.TextSize = 12
+jumpMinus.Parent = scroll
+local jmCorner = Instance.new("UICorner")
+jmCorner.CornerRadius = UDim.new(0, 3)
+jmCorner.Parent = jumpMinus
 
-local jumpValPlus = Instance.new("TextButton")
-jumpValPlus.Size = UDim2.new(0, 18, 0, 18)
-jumpValPlus.Position = UDim2.new(1, -20, 0, y)
-jumpValPlus.Text = "+"
-jumpValPlus.TextColor3 = Color3.fromRGB(255,255,255)
-jumpValPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-jumpValPlus.Font = Enum.Font.GothamBold
-jumpValPlus.TextSize = 12
-jumpValPlus.Parent = scroll
-local jvpCorner = Instance.new("UICorner")
-jvpCorner.CornerRadius = UDim.new(0, 3)
-jvpCorner.Parent = jumpValPlus
+local jumpPlus = Instance.new("TextButton")
+jumpPlus.Size = UDim2.new(0, 18, 0, 18)
+jumpPlus.Position = UDim2.new(1, -20, 0, y)
+jumpPlus.Text = "+"
+jumpPlus.TextColor3 = Color3.fromRGB(255,255,255)
+jumpPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+jumpPlus.Font = Enum.Font.GothamBold
+jumpPlus.TextSize = 12
+jumpPlus.Parent = scroll
+local jpCorner2 = Instance.new("UICorner")
+jpCorner2.CornerRadius = UDim.new(0, 3)
+jpCorner2.Parent = jumpPlus
 y = y + 26
 
 -- STATUS
-local statusText = Instance.new("TextLabel")
+statusText = Instance.new("TextLabel")
 statusText.Size = UDim2.new(1, -6, 0, 22)
 statusText.Position = UDim2.new(0, 3, 0, y)
 statusText.Text = "✓ VORTEX READY"
@@ -907,71 +855,30 @@ stCorner.CornerRadius = UDim.new(0, 4)
 stCorner.Parent = statusText
 y = y + 26
 
-scroll.CanvasSize = UDim2.new(0, 0, 0, y + 50)
+scroll.CanvasSize = UDim2.new(0, 0, 0, y + 30)
 
 -- ========== CONNECT ==========
-masterBtn.MouseButton1Click:Connect(UpdateMaster)
-boxBtn.MouseButton1Click:Connect(UpdateBox)
-tracerBtn.MouseButton1Click:Connect(UpdateTracer)
-nameBtn.MouseButton1Click:Connect(UpdateName)
+masterBtn.MouseButton1Click:Connect(ToggleMaster)
+boxBtn.MouseButton1Click:Connect(ToggleBox)
+tracerBtn.MouseButton1Click:Connect(ToggleTracer)
+nameBtn.MouseButton1Click:Connect(ToggleName)
 attackBtn.MouseButton1Click:Connect(ManualAttack)
-autoBtn.MouseButton1Click:Connect(ToggleAutoHit)
+autoBtn.MouseButton1Click:Connect(ToggleAuto)
 speedBtn.MouseButton1Click:Connect(ToggleSpeed)
 jumpBtn.MouseButton1Click:Connect(ToggleJump)
 noclipBtn.MouseButton1Click:Connect(ToggleNoclip)
-godModeBtn.MouseButton1Click:Connect(ToggleGodMode)
+godModeBtn.MouseButton1Click:Connect(ToggleGod)
 
--- Sliders
-thickMinus.MouseButton1Click:Connect(function()
-    espThick = math.max(1, espThick - 1)
-    thickLabel.Text = "TEBAL: "..espThick
-    RefreshESP()
-end)
-thickPlus.MouseButton1Click:Connect(function()
-    espThick = math.min(5, espThick + 1)
-    thickLabel.Text = "TEBAL: "..espThick
-    RefreshESP()
-end)
-
-radiusMinus.MouseButton1Click:Connect(function()
-    hitRange = math.max(30, hitRange - 10)
-    radiusLabel.Text = "RADIUS: "..hitRange
-end)
-radiusPlus.MouseButton1Click:Connect(function()
-    hitRange = math.min(100, hitRange + 10)
-    radiusLabel.Text = "RADIUS: "..hitRange
-end)
-
-damageMinus.MouseButton1Click:Connect(function()
-    hitDamage = math.max(100, hitDamage - 50)
-    damageLabel.Text = "DAMAGE: "..hitDamage
-end)
-damagePlus.MouseButton1Click:Connect(function()
-    hitDamage = math.min(999, hitDamage + 50)
-    damageLabel.Text = "DAMAGE: "..hitDamage
-end)
-
-speedValMinus.MouseButton1Click:Connect(function()
-    speedValue = math.max(25, speedValue - 25)
-    speedValLabel.Text = "SPEED: "..speedValue
-    ApplySpeed()
-end)
-speedValPlus.MouseButton1Click:Connect(function()
-    speedValue = math.min(999, speedValue + 25)
-    speedValLabel.Text = "SPEED: "..speedValue
-    ApplySpeed()
-end)
-
-jumpValMinus.MouseButton1Click:Connect(function()
-    jumpValue = math.max(50, jumpValue - 25)
-    jumpValLabel.Text = "JUMP: "..jumpValue
-    ApplyJump()
-end)
-jumpValPlus.MouseButton1Click:Connect(function()
-    jumpValue = math.min(999, jumpValue + 25)
-    jumpValLabel.Text = "JUMP: "..jumpValue
-    ApplyJump()
-end)
+thickMinus.MouseButton1Click:Connect(function() UpdateThick(-1) end)
+thickPlus.MouseButton1Click:Connect(function() UpdateThick(1) end)
+radiusMinus.MouseButton1Click:Connect(function() UpdateRadius(-10) end)
+radiusPlus.MouseButton1Click:Connect(function() UpdateRadius(10) end)
+damageMinus.MouseButton1Click:Connect(function() UpdateDamage(-50) end)
+damagePlus.MouseButton1Click:Connect(function() UpdateDamage(50) end)
+speedMinus.MouseButton1Click:Connect(function() UpdateSpeedVal(-25) end)
+speedPlus.MouseButton1Click:Connect(function() UpdateSpeedVal(25) end)
+jumpMinus.MouseButton1Click:Connect(function() UpdateJumpVal(-25) end)
+jumpPlus.MouseButton1Click:Connect(function() UpdateJumpVal(25) end)
 
 -- ========== DRAG ==========
 local drag = false
@@ -1041,13 +948,8 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     origJump = char.Humanoid.JumpPower
     ApplySpeed()
     ApplyJump()
-    
-    if noclipEnabled then
-        EnableNoclip()
-    end
-    if godModeEnabled then
-        EnableGodMode()
-    end
+    if noclipEnabled then EnableNoclip() end
+    if godModeEnabled then EnableGodMode() end
 end)
 if LocalPlayer.Character then
     origSpeed = LocalPlayer.Character.Humanoid.WalkSpeed
@@ -1064,9 +966,8 @@ end)()
 RunService.RenderStepped:Connect(UpdateESP)
 
 print("========================")
-print("🔥 VORTEX ULTIMATE FIXED 🔥")
-print("✅ UKURAN: 160x450 (KECIL)")
-print("✅ MINIMIZE: 100x28 (BESARAN)")
-print("✅ SEMUA TOMBOL BERUBAH WARNA")
-print("✅ SCROLL 1300 - SAMPE BAWAH")
+print("🔥 VORTEX SIMPLE 🔥")
+print("✅ WARNA: HIJAU=ON, MERAH=OFF")
+print("✅ UKURAN KECIL (160x450)")
+print("✅ SCROLL PANJANG")
 print("========================")

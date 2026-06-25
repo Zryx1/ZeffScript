@@ -1,7 +1,7 @@
 -- ========================================
--- VORTEX EVIL - FINAL ULTIMATE
--- ESP BOX WHITE (WORK ALL GAME)
--- WALLHACK | GOD MODE | AUTO HIT | MULTI PENDAPATAN
+-- VORTEX - DUAL PANEL MENU (FINAL)
+-- HITBOX EXPANDER + ESP HITBOX (TERSENDIRI)
+-- TELEPORT DIHAPUS, SPECIAL MENU NORMAL
 -- ========================================
 
 local Players = game:GetService("Players")
@@ -14,23 +14,40 @@ local Camera = workspace.CurrentCamera
 -- ESP
 local masterESP = false
 local espBox = false
-local espTracer = false
+local espLine = false
 local espName = false
-local espThick = 1
-local espColor = Color3.fromRGB(255, 255, 255) -- PUTIH
+local espDistance = false
+local espThick = 2
+local espColor = Color3.fromRGB(155, 0, 255)
+local colorIndex = 1
+local colors = {
+    Color3.fromRGB(0, 0, 255),
+    Color3.fromRGB(255, 0, 0),
+    Color3.fromRGB(0, 255, 0),
+    Color3.fromRGB(255, 255, 0),
+    Color3.fromRGB(155, 0, 255)
+}
+local colorNames = {"Biru", "Merah", "Hijau", "Kuning", "Ungu"}
+
+-- HITBOX (TERSENDIRI)
+local espHitbox = false
+local hitboxThick = 2
+local hitboxExpander = 0
+local hitboxExpanderEnabled = false
+local hitboxColor = Color3.fromRGB(255, 0, 0)
 
 -- WALLHACK
 local noclipEnabled = false
 local noclipConnection = nil
 
--- GOD MODE
-local godModeEnabled = false
-local godModeConnection = nil
-
--- AUTO HIT
-local autoHit = false
-local hitDamage = 999999
-local killLoop = nil
+-- FLY
+local flying = false
+local flySpeed = 2.0
+local upForce = 0
+local downForce = 0
+local flyBodyVelocity = nil
+local flyBodyGyro = nil
+local flyLoop = nil
 
 -- MULTI PENDAPATAN
 local multiIncomeEnabled = false
@@ -51,11 +68,10 @@ local espConnections = {}
 local origSpeed = 16
 local origJump = 50
 
--- ========== ESP BOX (WHITE - WORK ALL GAME) ==========
+-- ========== FUNGSI ESP ==========
 local function CreateESP(player)
     if player == LocalPlayer or espObjects[player] then return end
     
-    -- BOX
     local box = Drawing.new("Square")
     box.Visible = false
     box.Color = espColor
@@ -63,13 +79,11 @@ local function CreateESP(player)
     box.Transparency = 0.5
     box.Filled = false
     
-    -- TRACER
-    local tracer = Drawing.new("Line")
-    tracer.Visible = false
-    tracer.Color = espColor
-    tracer.Thickness = espThick
+    local line = Drawing.new("Line")
+    line.Visible = false
+    line.Color = espColor
+    line.Thickness = espThick
     
-    -- NAME
     local nameTag = Drawing.new("Text")
     nameTag.Visible = false
     nameTag.Color = espColor
@@ -78,15 +92,67 @@ local function CreateESP(player)
     nameTag.Outline = true
     nameTag.OutlineColor = Color3.fromRGB(0,0,0)
     
-    espObjects[player] = {box=box, tracer=tracer, nameTag=nameTag, player=player}
+    local distanceTag = Drawing.new("Text")
+    distanceTag.Visible = false
+    distanceTag.Color = espColor
+    distanceTag.Size = 10
+    distanceTag.Center = true
+    distanceTag.Outline = true
+    distanceTag.OutlineColor = Color3.fromRGB(0,0,0)
     
-    -- UPDATE LOOP
+    -- HITBOX ESP (terpisah, gak perlu Master ESP)
+    local hitbox = Drawing.new("Square")
+    hitbox.Visible = false
+    hitbox.Color = hitboxColor
+    hitbox.Thickness = hitboxThick
+    hitbox.Transparency = 0.3
+    hitbox.Filled = false
+    
+    espObjects[player] = {
+        box = box,
+        line = line,
+        nameTag = nameTag,
+        distanceTag = distanceTag,
+        hitbox = hitbox,
+        player = player
+    }
+    
     local connection
     connection = RunService.RenderStepped:Connect(function()
+        -- HITBOX ESP TIDAK TERGANTUNG MASTER ESP
+        if espHitbox then
+            local char = player.Character
+            local hum = char and char:FindFirstChild("Humanoid")
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if char and hum and root and hum.Health > 0 then
+                local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+                if onScreen then
+                    local dist = (root.Position - Camera.CFrame.Position).Magnitude
+                    local baseSize = math.clamp(200 / dist, 30, 100)
+                    local expandSize = baseSize + (baseSize * hitboxExpander / 100)
+                    
+                    hitbox.Size = Vector2.new(expandSize, expandSize)
+                    hitbox.Position = Vector2.new(pos.X - expandSize / 2, pos.Y - expandSize / 1.2)
+                    hitbox.Visible = true
+                    hitbox.Color = hitboxColor
+                    hitbox.Thickness = hitboxThick
+                else
+                    hitbox.Visible = false
+                end
+            else
+                hitbox.Visible = false
+            end
+        else
+            hitbox.Visible = false
+        end
+        
+        -- ESP REGULER (TERGANTUNG MASTER ESP)
         if not masterESP then
             if box then box.Visible = false end
-            if tracer then tracer.Visible = false end
+            if line then line.Visible = false end
             if nameTag then nameTag.Visible = false end
+            if distanceTag then distanceTag.Visible = false end
             return
         end
         
@@ -96,15 +162,17 @@ local function CreateESP(player)
         
         if not char or not hum or not root or hum.Health <= 0 then
             if box then box.Visible = false end
-            if tracer then tracer.Visible = false end
+            if line then line.Visible = false end
             if nameTag then nameTag.Visible = false end
+            if distanceTag then distanceTag.Visible = false end
             return
         end
         
         local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
         local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        local dist = (root.Position - Camera.CFrame.Position).Magnitude
+        local distText = string.format("%.1f m", dist)
         
-        -- BOX ESP (Method yang work all game)
         if espBox and box and onScreen then
             local top = Camera:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0))
             local bottom = Camera:WorldToViewportPoint(root.Position + Vector3.new(0, -3.5, 0))
@@ -120,36 +188,47 @@ local function CreateESP(player)
             box.Visible = false
         end
         
-        -- TRACER ESP
-        if espTracer and tracer and onScreen then
-            tracer.From = center
-            tracer.To = Vector2.new(pos.X, pos.Y)
-            tracer.Visible = true
-            tracer.Color = espColor
-            tracer.Thickness = espThick
-        elseif tracer then
-            tracer.Visible = false
+        if espLine and line and onScreen then
+            line.From = center
+            line.To = Vector2.new(pos.X, pos.Y)
+            line.Visible = true
+            line.Color = espColor
+            line.Thickness = espThick
+        elseif line then
+            line.Visible = false
         end
         
-        -- NAME ESP
+        local nameYOffset = 35
+        if espDistance then nameYOffset = 50 end
+        
         if espName and nameTag and onScreen then
             nameTag.Text = player.Name
-            nameTag.Position = Vector2.new(pos.X, pos.Y - 35)
+            nameTag.Position = Vector2.new(pos.X, pos.Y - nameYOffset)
             nameTag.Visible = true
             nameTag.Color = espColor
         elseif nameTag then
             nameTag.Visible = false
         end
+        
+        if espDistance and distanceTag and onScreen then
+            distanceTag.Text = distText
+            distanceTag.Position = Vector2.new(pos.X, pos.Y - 20)
+            distanceTag.Visible = true
+            distanceTag.Color = espColor
+        elseif distanceTag then
+            distanceTag.Visible = false
+        end
     end)
     
     espConnections[player] = connection
     
-    -- CLEANUP
     player.AncestryChanged:Connect(function(_, parent)
         if not parent then
             if box then box:Remove() end
-            if tracer then tracer:Remove() end
+            if line then line:Remove() end
             if nameTag then nameTag:Remove() end
+            if distanceTag then distanceTag:Remove() end
+            if hitbox then hitbox:Remove() end
             if espConnections[player] then espConnections[player]:Disconnect() end
             espObjects[player] = nil
             espConnections[player] = nil
@@ -161,8 +240,10 @@ local function RemoveESP(player)
     local esp = espObjects[player]
     if esp then
         if esp.box then esp.box:Remove() end
-        if esp.tracer then esp.tracer:Remove() end
+        if esp.line then esp.line:Remove() end
         if esp.nameTag then esp.nameTag:Remove() end
+        if esp.distanceTag then esp.distanceTag:Remove() end
+        if esp.hitbox then esp.hitbox:Remove() end
         espObjects[player] = nil
     end
     if espConnections[player] then
@@ -177,13 +258,75 @@ local function RefreshESP()
             esp.box.Color = espColor
             esp.box.Thickness = espThick
         end
-        if esp.tracer then
-            esp.tracer.Color = espColor
-            esp.tracer.Thickness = espThick
+        if esp.line then
+            esp.line.Color = espColor
+            esp.line.Thickness = espThick
         end
         if esp.nameTag then
             esp.nameTag.Color = espColor
         end
+        if esp.distanceTag then
+            esp.distanceTag.Color = espColor
+        end
+        if esp.hitbox then
+            esp.hitbox.Color = hitboxColor
+            esp.hitbox.Thickness = hitboxThick
+        end
+    end
+end
+
+-- ========== HITBOX EXPANDER ==========
+local function ExpandHitbox()
+    if not hitboxExpanderEnabled then return end
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            local hum = p.Character:FindFirstChild("Humanoid")
+            if hum then
+                local scale = 1 + (hitboxExpander / 100)
+                p.Character.Scale = scale
+            end
+        end
+    end
+end
+
+local function ResetHitbox()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            p.Character.Scale = 1
+        end
+    end
+end
+
+local function ToggleHitboxExpander()
+    hitboxExpanderEnabled = not hitboxExpanderEnabled
+    if hitboxExpanderEnabled then
+        hitboxExpanderBtn.Text = "Hitbox Expander [ON]"
+        hitboxExpanderBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+        ExpandHitbox()
+    else
+        hitboxExpanderBtn.Text = "Hitbox Expander [OFF]"
+        hitboxExpanderBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+        ResetHitbox()
+    end
+end
+
+local function UpdateHitboxExpand(val)
+    hitboxExpander = math.max(0, math.min(100, hitboxExpander + val))
+    expanderLabel.Text = "Expand: "..hitboxExpander.."%"
+    if hitboxExpanderEnabled then
+        ExpandHitbox()
+    end
+end
+
+local function ToggleHitboxESP()
+    espHitbox = not espHitbox
+    if espHitbox then
+        hitboxBtn.Text = "Hitbox ESP [ON]"
+        hitboxBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+    else
+        hitboxBtn.Text = "Hitbox ESP [OFF]"
+        hitboxBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
     end
 end
 
@@ -195,7 +338,9 @@ local function EnableNoclip()
         local char = LocalPlayer.Character
         if not char then return end
         for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
         end
     end)
 end
@@ -208,109 +353,92 @@ local function DisableNoclip()
     local char = LocalPlayer.Character
     if char then
         for _, part in pairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = true end
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
         end
     end
 end
 
--- ========== GOD MODE ==========
-local function EnableGodMode()
-    if godModeConnection then godModeConnection:Disconnect() end
-    godModeConnection = RunService.Stepped:Connect(function()
-        if not godModeEnabled then return end
-        local char = LocalPlayer.Character
-        if not char then return end
+local function ToggleWallhack()
+    noclipEnabled = not noclipEnabled
+    if noclipEnabled then
+        EnableNoclip()
+        wallhackBtn.Text = "Wallhack [ON]"
+        wallhackBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+    else
+        DisableNoclip()
+        wallhackBtn.Text = "Wallhack [OFF]"
+        wallhackBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+    end
+end
+
+-- ========== FLY ==========
+local function StartFly()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChild("Humanoid")
+    if not root or not hum then return end
+    
+    if flyBodyVelocity then flyBodyVelocity:Destroy() end
+    if flyBodyGyro then flyBodyGyro:Destroy() end
+    if flyLoop then flyLoop:Disconnect() end
+    
+    flyBodyVelocity = Instance.new("BodyVelocity", root)
+    flyBodyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+    
+    flyBodyGyro = Instance.new("BodyGyro", root)
+    flyBodyGyro.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+    flyBodyGyro.P = 10000
+    
+    flyLoop = RunService.Stepped:Connect(function()
+        if not flying or not char or not root then return end
+        
+        local moveDir = hum.MoveDirection
+        local localMove = Camera.CFrame:VectorToObjectSpace(moveDir)
+        local vertical = Vector3.new(0, upForce + downForce, 0)
+        local finalDir = (Camera.CFrame.LookVector * -localMove.Z) + (Camera.CFrame.RightVector * localMove.X) + vertical
+        
+        flyBodyVelocity.Velocity = finalDir * (flySpeed * 20)
+        flyBodyGyro.CFrame = Camera.CFrame
+        hum:ChangeState(Enum.HumanoidStateType.Swimming)
+    end)
+end
+
+local function StopFly()
+    if flyBodyVelocity then
+        flyBodyVelocity:Destroy()
+        flyBodyVelocity = nil
+    end
+    if flyBodyGyro then
+        flyBodyGyro:Destroy()
+        flyBodyGyro = nil
+    end
+    if flyLoop then
+        flyLoop:Disconnect()
+        flyLoop = nil
+    end
+    
+    local char = LocalPlayer.Character
+    if char then
         local hum = char:FindFirstChild("Humanoid")
         if hum then
-            if hum.Health < hum.MaxHealth then hum.Health = hum.MaxHealth end
-            if hum.Health <= 0 then hum.Health = hum.MaxHealth end
-            hum.BreakJointsOnDeath = false
-            if hum:GetState() == Enum.HumanoidStateType.Dead then
-                hum:ChangeState(Enum.HumanoidStateType.Running)
-            end
-        end
-    end)
-end
-
-local function DisableGodMode()
-    if godModeConnection then
-        godModeConnection:Disconnect()
-        godModeConnection = nil
-    end
-end
-
--- ========== KILL FUNCTION ==========
-local function KillPlayer(target)
-    if target == LocalPlayer then return end
-    
-    pcall(function()
-        local char = target.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then
-                hum.Health = 0
-                hum.BreakJointsOnDeath = true
-            end
-        end
-    end)
-    
-    pcall(function()
-        if target.Character then target.Character:Destroy() end
-    end)
-    
-    pcall(function()
-        local char = target.Character
-        if char then
-            local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Head")
-            if root then
-                local exp = Instance.new("Explosion")
-                exp.Position = root.Position
-                exp.BlastRadius = 50
-                exp.BlastPressure = 999999999
-                exp.Parent = workspace
-            end
-        end
-    end)
-    
-    pcall(function()
-        local char = target.Character
-        if char then
-            local root = char:FindFirstChild("HumanoidRootPart")
-            if root then
-                root.CFrame = CFrame.new(0, -10000, 0)
-            end
-        end
-    end)
-end
-
-local function KillAllPlayers()
-    local killed = 0
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then
-            KillPlayer(p)
-            killed = killed + 1
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
         end
     end
-    return killed
 end
 
--- ========== AUTO HIT ==========
-local function StartAutoHit()
-    if killLoop then killLoop:Disconnect() end
-    killLoop = RunService.Stepped:Connect(function()
-        if not autoHit then return end
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer then
-                KillPlayer(p)
-            end
-        end
-    end)
-end
-
-local function StopAutoHit()
-    if killLoop then
-        killLoop:Disconnect()
-        killLoop = nil
+local function ToggleFly()
+    flying = not flying
+    if flying then
+        flyBtn.Text = "Fly [ON]"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+        StartFly()
+    else
+        flyBtn.Text = "Fly [OFF]"
+        flyBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+        StopFly()
     end
 end
 
@@ -394,6 +522,24 @@ local function DisableMultiIncome()
     end
 end
 
+local function ToggleMultiIncome()
+    multiIncomeEnabled = not multiIncomeEnabled
+    if multiIncomeEnabled then
+        EnableMultiIncome()
+        multiIncomeBtn.Text = "Multi Pendapatan [ON]"
+        multiIncomeBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+        statusText.Text = "Multi Pendapatan "..incomeMultiplier.."x Aktif"
+    else
+        DisableMultiIncome()
+        multiIncomeBtn.Text = "Multi Pendapatan [OFF]"
+        multiIncomeBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+        statusText.Text = "Multi Pendapatan Mati"
+    end
+    statusText.TextColor3 = Color3.fromRGB(0,255,0)
+    task.wait(0.5)
+    statusText.Text = "Ready"
+end
+
 -- ========== SPEED JUMP ==========
 local function ApplySpeed()
     local char = LocalPlayer.Character
@@ -409,112 +555,24 @@ local function ApplyJump()
     end
 end
 
--- ========== TOGGLE FUNGSI ==========
-local function ToggleMaster()
-    masterESP = not masterESP
-    masterBtn.BackgroundColor3 = masterESP and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
-end
-
-local function ToggleBox()
-    espBox = not espBox
-    boxBtn.BackgroundColor3 = espBox and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
-end
-
-local function ToggleTracer()
-    espTracer = not espTracer
-    tracerBtn.BackgroundColor3 = espTracer and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
-end
-
-local function ToggleName()
-    espName = not espName
-    nameBtn.BackgroundColor3 = espName and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
-end
-
-local function ToggleNoclip()
-    noclipEnabled = not noclipEnabled
-    if noclipEnabled then
-        EnableNoclip()
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
-    else
-        DisableNoclip()
-        noclipBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-    end
-end
-
-local function ToggleGod()
-    godModeEnabled = not godModeEnabled
-    if godModeEnabled then
-        EnableGodMode()
-        godModeBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
-    else
-        DisableGodMode()
-        godModeBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-    end
-end
-
-local function ToggleAuto()
-    autoHit = not autoHit
-    if autoHit then
-        StartAutoHit()
-        autoBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
-        autoStatus.Text = "● ACTIVE"
-        autoStatus.TextColor3 = Color3.fromRGB(0,255,0)
-        attackBtn.BackgroundColor3 = Color3.fromRGB(0,120,0)
-    else
-        StopAutoHit()
-        autoBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-        autoStatus.Text = "○ INACTIVE"
-        autoStatus.TextColor3 = Color3.fromRGB(255,100,100)
-        attackBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
-    end
-end
-
-local function ManualAttack()
-    local killed = KillAllPlayers()
-    if killed > 0 then
-        statusText.Text = "💀 "..killed.." PLAYERS KILLED!"
-        statusText.TextColor3 = Color3.fromRGB(255,0,0)
-    else
-        statusText.Text = "❌ NO TARGET"
-        statusText.TextColor3 = Color3.fromRGB(255,0,0)
-    end
-    task.wait(1)
-    statusText.Text = "✓ READY"
-    statusText.TextColor3 = Color3.fromRGB(0,255,0)
-end
-
-local function ToggleMultiIncome()
-    multiIncomeEnabled = not multiIncomeEnabled
-    if multiIncomeEnabled then
-        EnableMultiIncome()
-        multiIncomeBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
-        statusText.Text = "💰 MULTI PENDAPATAN "..incomeMultiplier.."x AKTIF!"
-    else
-        DisableMultiIncome()
-        multiIncomeBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-        statusText.Text = "💰 MULTI PENDAPATAN OFF"
-    end
-    statusText.TextColor3 = Color3.fromRGB(0,255,0)
-    task.wait(0.5)
-    statusText.Text = "✓ READY"
-end
-
 local function ToggleSpeed()
     speedBoost = not speedBoost
+    speedBtn.Text = speedBoost and "Speed Boost [ON]" or "Speed Boost [OFF]"
     speedBtn.BackgroundColor3 = speedBoost and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
     ApplySpeed()
 end
 
 local function ToggleJump()
     jumpBoost = not jumpBoost
+    jumpBtn.Text = jumpBoost and "Jump Boost [ON]" or "Jump Boost [OFF]"
     jumpBtn.BackgroundColor3 = jumpBoost and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
     ApplyJump()
 end
 
--- ========== SLIDER FUNGSI ==========
+-- ========== SLIDER ==========
 local function UpdateThick(val)
     espThick = math.max(1, math.min(5, espThick + val))
-    thickLabel.Text = "TEBAL: "..espThick
+    thickVal.Text = tostring(espThick)
     RefreshESP()
 end
 
@@ -522,36 +580,58 @@ local function UpdateMultiplier(val)
     local newVal = incomeMultiplier + val
     if newVal >= 1 and newVal <= 999 then
         incomeMultiplier = newVal
-        multiplierLabel.Text = "MULTI: "..incomeMultiplier.."x"
+        multiVal.Text = tostring(incomeMultiplier) .. "x"
         if multiIncomeEnabled then
-            statusText.Text = "💰 MULTIPLIER: "..incomeMultiplier.."x"
+            statusText.Text = "Multiplier: "..incomeMultiplier.."x"
             task.wait(0.5)
-            statusText.Text = "✓ READY"
+            statusText.Text = "Ready"
         end
     end
 end
 
 local function UpdateSpeedVal(val)
     speedValue = math.max(25, math.min(999, speedValue + val))
-    speedValLabel.Text = "SPEED: "..speedValue
+    speedVal.Text = tostring(speedValue)
     ApplySpeed()
 end
 
 local function UpdateJumpVal(val)
     jumpValue = math.max(50, math.min(999, jumpValue + val))
-    jumpValLabel.Text = "JUMP: "..jumpValue
+    jumpVal.Text = tostring(jumpValue)
     ApplyJump()
 end
 
--- ========== BUAT GUI ==========
+local function UpdateFlySpeed(val)
+    flySpeed = math.max(0.5, math.min(10, flySpeed + val))
+    flySpeedVal.Text = string.format("%.1f", flySpeed)
+end
+
+-- ========== FLY UP/DOWN ==========
+local function FlyUp()
+    upForce = 1
+end
+
+local function FlyUpRelease()
+    upForce = 0
+end
+
+local function FlyDown()
+    downForce = -1
+end
+
+local function FlyDownRelease()
+    downForce = 0
+end
+
+-- ========== GUI ==========
 local gui = Instance.new("ScreenGui")
-gui.Name = "VortexFinal"
+gui.Name = "VortexDual"
 gui.ResetOnSpawn = false
 gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 170, 0, 520)
-frame.Position = UDim2.new(0.5, -85, 0.01, 0)
+frame.Size = UDim2.new(0, 340, 0, 520)
+frame.Position = UDim2.new(0.5, -170, 0.05, 0)
 frame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
 frame.BackgroundTransparency = 0
 frame.BorderSizePixel = 0
@@ -563,7 +643,7 @@ fCorner.Parent = frame
 
 -- HEADER
 local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 28)
+header.Size = UDim2.new(1, 0, 0, 30)
 header.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
 header.BackgroundTransparency = 0
 header.BorderSizePixel = 0
@@ -576,11 +656,11 @@ hCorner.Parent = header
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.5, 0, 1, 0)
 title.Position = UDim2.new(0.05, 0, 0, 0)
-title.Text = "💀 VORTEX"
+title.Text = "VORTEX"
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
-title.TextSize = 11
+title.TextSize = 13
 title.Parent = header
 
 local minBtn = Instance.new("TextButton")
@@ -603,407 +683,554 @@ closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 12
 closeBtn.Parent = header
 
--- SCROLL
-local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, -6, 1, -36)
-scroll.Position = UDim2.new(0, 3, 0, 32)
-scroll.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
-scroll.BackgroundTransparency = 0
-scroll.BorderSizePixel = 0
-scroll.CanvasSize = UDim2.new(0, 0, 0, 1300)
-scroll.ScrollBarThickness = 3
-scroll.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
-scroll.Parent = frame
+-- DIVIDER
+local divider = Instance.new("Frame")
+divider.Size = UDim2.new(0, 1, 1, -42)
+divider.Position = UDim2.new(0.3, 0, 0, 35)
+divider.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
+divider.BackgroundTransparency = 0.3
+divider.BorderSizePixel = 0
+divider.Parent = frame
 
-local y = 3
+-- ===== KIRI: KATEGORI =====
+local leftScroll = Instance.new("ScrollingFrame")
+leftScroll.Size = UDim2.new(0.3, -6, 1, -42)
+leftScroll.Position = UDim2.new(0, 3, 0, 35)
+leftScroll.BackgroundTransparency = 1
+leftScroll.CanvasSize = UDim2.new(0, 0, 0, 350)
+leftScroll.ScrollBarThickness = 2
+leftScroll.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
+leftScroll.Parent = frame
 
--- ESP SECTION
-local espTitle = Instance.new("TextLabel")
-espTitle.Size = UDim2.new(1, -6, 0, 16)
-espTitle.Position = UDim2.new(0, 3, 0, y)
-espTitle.Text = "🎮 ESP MENU (WHITE)"
-espTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-espTitle.BackgroundTransparency = 1
-espTitle.Font = Enum.Font.GothamBold
-espTitle.TextSize = 9
-espTitle.Parent = scroll
-y = y + 18
+-- ===== KANAN: ISI =====
+local rightScroll = Instance.new("ScrollingFrame")
+rightScroll.Size = UDim2.new(0.7, -8, 1, -42)
+rightScroll.Position = UDim2.new(0.3, 5, 0, 35)
+rightScroll.BackgroundTransparency = 1
+rightScroll.CanvasSize = UDim2.new(0, 0, 0, 1300)
+rightScroll.ScrollBarThickness = 2
+rightScroll.ScrollBarImageColor3 = Color3.fromRGB(155, 0, 255)
+rightScroll.Parent = frame
 
-masterBtn = Instance.new("TextButton")
-masterBtn.Size = UDim2.new(1, -6, 0, 22)
-masterBtn.Position = UDim2.new(0, 3, 0, y)
-masterBtn.Text = "MASTER ESP"
-masterBtn.TextColor3 = Color3.fromRGB(255,255,255)
-masterBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-masterBtn.Font = Enum.Font.GothamBold
-masterBtn.TextSize = 8
-masterBtn.Parent = scroll
-y = y + 26
+-- ===== KIRI: ISI KATEGORI =====
+local ly = 5
+local categories = {"ESP MENU", "SPECIAL MENU", "PLAYER MENU", "BETA TEST"}
+local categoryBtns = {}
 
-boxBtn = Instance.new("TextButton")
-boxBtn.Size = UDim2.new(1, -6, 0, 22)
-boxBtn.Position = UDim2.new(0, 3, 0, y)
-boxBtn.Text = "BOX ESP"
-boxBtn.TextColor3 = Color3.fromRGB(255,255,255)
-boxBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-boxBtn.Font = Enum.Font.GothamBold
-boxBtn.TextSize = 8
-boxBtn.Parent = scroll
-y = y + 26
+for _, cat in ipairs(categories) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -6, 0, 28)
+    btn.Position = UDim2.new(0, 3, 0, ly)
+    btn.Text = cat
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,55)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 9
+    btn.Parent = leftScroll
+    
+    local bCorner = Instance.new("UICorner")
+    bCorner.CornerRadius = UDim.new(0, 4)
+    bCorner.Parent = btn
+    
+    categoryBtns[cat] = btn
+    ly = ly + 32
+end
 
-tracerBtn = Instance.new("TextButton")
-tracerBtn.Size = UDim2.new(1, -6, 0, 22)
-tracerBtn.Position = UDim2.new(0, 3, 0, y)
-tracerBtn.Text = "TRACER ESP"
-tracerBtn.TextColor3 = Color3.fromRGB(255,255,255)
-tracerBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-tracerBtn.Font = Enum.Font.GothamBold
-tracerBtn.TextSize = 8
-tracerBtn.Parent = scroll
-y = y + 26
+leftScroll.CanvasSize = UDim2.new(0, 0, 0, ly + 10)
 
-nameBtn = Instance.new("TextButton")
-nameBtn.Size = UDim2.new(1, -6, 0, 22)
-nameBtn.Position = UDim2.new(0, 3, 0, y)
-nameBtn.Text = "NAME ESP"
-nameBtn.TextColor3 = Color3.fromRGB(255,255,255)
-nameBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-nameBtn.Font = Enum.Font.GothamBold
-nameBtn.TextSize = 8
-nameBtn.Parent = scroll
-y = y + 26
+-- ===== KANAN: ISI MENU =====
+local ry = 5
+local currentCategory = "ESP MENU"
 
-thickLabel = Instance.new("TextLabel")
-thickLabel.Size = UDim2.new(0.5, 0, 0, 20)
-thickLabel.Position = UDim2.new(0, 3, 0, y)
-thickLabel.Text = "TEBAL: 1"
-thickLabel.TextColor3 = Color3.fromRGB(200,200,220)
-thickLabel.BackgroundTransparency = 1
-thickLabel.Font = Enum.Font.GothamBold
-thickLabel.TextSize = 8
-thickLabel.Parent = scroll
+local function AddSeparator(text)
+    local sep = Instance.new("TextLabel")
+    sep.Size = UDim2.new(1, -6, 0, 18)
+    sep.Position = UDim2.new(0, 3, 0, ry)
+    sep.Text = "--- " .. text .. " ---"
+    sep.TextColor3 = Color3.fromRGB(155, 0, 255)
+    sep.BackgroundTransparency = 1
+    sep.Font = Enum.Font.GothamBold
+    sep.TextSize = 9
+    sep.Parent = rightScroll
+    ry = ry + 20
+end
 
-local thickMinus = Instance.new("TextButton")
-thickMinus.Size = UDim2.new(0, 18, 0, 18)
-thickMinus.Position = UDim2.new(1, -40, 0, y)
-thickMinus.Text = "-"
-thickMinus.TextColor3 = Color3.fromRGB(255,255,255)
-thickMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-thickMinus.Font = Enum.Font.GothamBold
-thickMinus.TextSize = 12
-thickMinus.Parent = scroll
+local function AddToggle(label, state, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -6, 0, 26)
+    btn.Position = UDim2.new(0, 3, 0, ry)
+    btn.Text = state and (label .. " [ON]") or (label .. " [OFF]")
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.BackgroundColor3 = state and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 9
+    btn.Parent = rightScroll
+    
+    local bCorner = Instance.new("UICorner")
+    bCorner.CornerRadius = UDim.new(0, 4)
+    bCorner.Parent = btn
+    
+    btn.MouseButton1Click:Connect(function()
+        callback()
+        local newState = (btn.BackgroundColor3 == Color3.fromRGB(0,180,0))
+        btn.Text = newState and (label .. " [ON]") or (label .. " [OFF]")
+    end)
+    
+    ry = ry + 30
+    return btn
+end
 
-local thickPlus = Instance.new("TextButton")
-thickPlus.Size = UDim2.new(0, 18, 0, 18)
-thickPlus.Position = UDim2.new(1, -20, 0, y)
-thickPlus.Text = "+"
-thickPlus.TextColor3 = Color3.fromRGB(255,255,255)
-thickPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-thickPlus.Font = Enum.Font.GothamBold
-thickPlus.TextSize = 12
-thickPlus.Parent = scroll
-y = y + 24
+local function AddSlider(label, value, minVal, maxVal, callback)
+    local frameSlider = Instance.new("Frame")
+    frameSlider.Size = UDim2.new(1, -6, 0, 28)
+    frameSlider.Position = UDim2.new(0, 3, 0, ry)
+    frameSlider.BackgroundColor3 = Color3.fromRGB(30,30,42)
+    frameSlider.BackgroundTransparency = 0
+    frameSlider.BorderSizePixel = 0
+    frameSlider.Parent = rightScroll
+    
+    local sCorner = Instance.new("UICorner")
+    sCorner.CornerRadius = UDim.new(0, 4)
+    sCorner.Parent = frameSlider
+    
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.35, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 6, 0, 0)
+    lbl.Text = label
+    lbl.TextColor3 = Color3.fromRGB(200,200,220)
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 8
+    lbl.Parent = frameSlider
+    
+    local valTxt = Instance.new("TextLabel")
+    valTxt.Size = UDim2.new(0.2, 0, 1, 0)
+    valTxt.Position = UDim2.new(0.45, 0, 0, 0)
+    valTxt.Text = tostring(value)
+    valTxt.TextColor3 = Color3.fromRGB(155,0,255)
+    valTxt.BackgroundTransparency = 1
+    valTxt.Font = Enum.Font.GothamBold
+    valTxt.TextSize = 8
+    valTxt.Parent = frameSlider
+    
+    local minus = Instance.new("TextButton")
+    minus.Size = UDim2.new(0, 18, 0, 18)
+    minus.Position = UDim2.new(1, -40, 0.5, -9)
+    minus.Text = "-"
+    minus.TextColor3 = Color3.fromRGB(255,255,255)
+    minus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+    minus.Font = Enum.Font.GothamBold
+    minus.TextSize = 12
+    minus.Parent = frameSlider
+    
+    local plus = Instance.new("TextButton")
+    plus.Size = UDim2.new(0, 18, 0, 18)
+    plus.Position = UDim2.new(1, -20, 0.5, -9)
+    plus.Text = "+"
+    plus.TextColor3 = Color3.fromRGB(255,255,255)
+    plus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+    plus.Font = Enum.Font.GothamBold
+    plus.TextSize = 12
+    plus.Parent = frameSlider
+    
+    local mCorner = Instance.new("UICorner")
+    mCorner.CornerRadius = UDim.new(0, 3)
+    mCorner.Parent = minus
+    local pCorner = Instance.new("UICorner")
+    pCorner.CornerRadius = UDim.new(0, 3)
+    pCorner.Parent = plus
+    
+    local val = value
+    minus.MouseButton1Click:Connect(function()
+        val = math.max(minVal, val - 1)
+        valTxt.Text = tostring(val)
+        callback(val)
+    end)
+    plus.MouseButton1Click:Connect(function()
+        val = math.min(maxVal, val + 1)
+        valTxt.Text = tostring(val)
+        callback(val)
+    end)
+    
+    ry = ry + 32
+    return {frame = frameSlider, value = valTxt, minus = minus, plus = plus}
+end
 
--- WALLHACK
-local wallTitle = Instance.new("TextLabel")
-wallTitle.Size = UDim2.new(1, -6, 0, 16)
-wallTitle.Position = UDim2.new(0, 3, 0, y)
-wallTitle.Text = "🪄 WALLHACK"
-wallTitle.TextColor3 = Color3.fromRGB(0, 200, 255)
-wallTitle.BackgroundTransparency = 1
-wallTitle.Font = Enum.Font.GothamBold
-wallTitle.TextSize = 9
-wallTitle.Parent = scroll
-y = y + 18
+-- ===== BUILD KONTEN =====
+local function BuildESPContent()
+    ry = 5
+    AddSeparator("ESP MENU")
+    masterBtn = AddToggle("Master ESP", masterESP, function() 
+        masterESP = not masterESP
+        masterBtn.Text = masterESP and "Master ESP [ON]" or "Master ESP [OFF]"
+        masterBtn.BackgroundColor3 = masterESP and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+    end)
+    nameBtn = AddToggle("Name ESP", espName, function() 
+        espName = not espName
+        nameBtn.Text = espName and "Name ESP [ON]" or "Name ESP [OFF]"
+        nameBtn.BackgroundColor3 = espName and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+    end)
+    lineBtn = AddToggle("Line ESP", espLine, function() 
+        espLine = not espLine
+        lineBtn.Text = espLine and "Line ESP [ON]" or "Line ESP [OFF]"
+        lineBtn.BackgroundColor3 = espLine and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+    end)
+    boxBtn = AddToggle("Box ESP", espBox, function() 
+        espBox = not espBox
+        boxBtn.Text = espBox and "Box ESP [ON]" or "Box ESP [OFF]"
+        boxBtn.BackgroundColor3 = espBox and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+    end)
+    distBtn = AddToggle("Distance ESP", espDistance, function() 
+        espDistance = not espDistance
+        distBtn.Text = espDistance and "Distance ESP [ON]" or "Distance ESP [OFF]"
+        distBtn.BackgroundColor3 = espDistance and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+    end)
+    
+    AddSeparator("WARNA & KETEBALAN")
+    
+    local colorFrame = Instance.new("Frame")
+    colorFrame.Size = UDim2.new(1, -6, 0, 28)
+    colorFrame.Position = UDim2.new(0, 3, 0, ry)
+    colorFrame.BackgroundColor3 = Color3.fromRGB(30,30,42)
+    colorFrame.BackgroundTransparency = 0
+    colorFrame.BorderSizePixel = 0
+    colorFrame.Parent = rightScroll
+    local cCorner = Instance.new("UICorner")
+    cCorner.CornerRadius = UDim.new(0, 4)
+    cCorner.Parent = colorFrame
+    
+    colorLabel = Instance.new("TextLabel")
+    colorLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    colorLabel.Position = UDim2.new(0, 6, 0, 0)
+    colorLabel.Text = "Warna: Ungu"
+    colorLabel.TextColor3 = Color3.fromRGB(200,200,220)
+    colorLabel.BackgroundTransparency = 1
+    colorLabel.Font = Enum.Font.GothamBold
+    colorLabel.TextSize = 8
+    colorLabel.Parent = colorFrame
+    
+    local colorLeft = Instance.new("TextButton")
+    colorLeft.Size = UDim2.new(0, 18, 0, 18)
+    colorLeft.Position = UDim2.new(1, -40, 0.5, -9)
+    colorLeft.Text = "<"
+    colorLeft.TextColor3 = Color3.fromRGB(255,255,255)
+    colorLeft.BackgroundColor3 = Color3.fromRGB(55,55,75)
+    colorLeft.Font = Enum.Font.GothamBold
+    colorLeft.TextSize = 10
+    colorLeft.Parent = colorFrame
+    colorLeft.MouseButton1Click:Connect(function()
+        colorIndex = colorIndex - 1
+        if colorIndex < 1 then colorIndex = #colors end
+        espColor = colors[colorIndex]
+        colorLabel.Text = "Warna: " .. colorNames[colorIndex]
+        RefreshESP()
+    end)
+    
+    local colorRight = Instance.new("TextButton")
+    colorRight.Size = UDim2.new(0, 18, 0, 18)
+    colorRight.Position = UDim2.new(1, -20, 0.5, -9)
+    colorRight.Text = ">"
+    colorRight.TextColor3 = Color3.fromRGB(255,255,255)
+    colorRight.BackgroundColor3 = Color3.fromRGB(55,55,75)
+    colorRight.Font = Enum.Font.GothamBold
+    colorRight.TextSize = 10
+    colorRight.Parent = colorFrame
+    colorRight.MouseButton1Click:Connect(function()
+        colorIndex = colorIndex % #colors + 1
+        espColor = colors[colorIndex]
+        colorLabel.Text = "Warna: " .. colorNames[colorIndex]
+        RefreshESP()
+    end)
+    ry = ry + 32
+    
+    thickVal = AddSlider("Ketebalan", espThick, 1, 5, function(val)
+        espThick = val
+        RefreshESP()
+    end)
+    ry = ry + 5
+    
+    rightScroll.CanvasSize = UDim2.new(0, 0, 0, ry + 30)
+end
 
-noclipBtn = Instance.new("TextButton")
-noclipBtn.Size = UDim2.new(1, -6, 0, 26)
-noclipBtn.Position = UDim2.new(0, 3, 0, y)
-noclipBtn.Text = "WALLHACK"
-noclipBtn.TextColor3 = Color3.fromRGB(255,255,255)
-noclipBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-noclipBtn.Font = Enum.Font.GothamBold
-noclipBtn.TextSize = 8
-noclipBtn.Parent = scroll
-y = y + 30
+local function BuildSpecialContent()
+    ry = 5
+    AddSeparator("SPECIAL MENU")
+    
+    -- WALLHACK
+    wallhackBtn = AddToggle("Wallhack", noclipEnabled, function() 
+        noclipEnabled = not noclipEnabled
+        if noclipEnabled then
+            EnableNoclip()
+            wallhackBtn.Text = "Wallhack [ON]"
+            wallhackBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+        else
+            DisableNoclip()
+            wallhackBtn.Text = "Wallhack [OFF]"
+            wallhackBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+        end
+    end)
+    
+    AddSeparator("FLY")
+    flyBtn = AddToggle("Fly", flying, function() 
+        flying = not flying
+        if flying then
+            flyBtn.Text = "Fly [ON]"
+            flyBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+            StartFly()
+        else
+            flyBtn.Text = "Fly [OFF]"
+            flyBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+            StopFly()
+        end
+    end)
+    
+    local upBtn = Instance.new("TextButton")
+    upBtn.Size = UDim2.new(0.45, -4, 0, 24)
+    upBtn.Position = UDim2.new(0, 3, 0, ry)
+    upBtn.Text = "UP"
+    upBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    upBtn.BackgroundColor3 = Color3.fromRGB(0,100,200)
+    upBtn.Font = Enum.Font.GothamBold
+    upBtn.TextSize = 10
+    upBtn.Parent = rightScroll
+    upBtn.MouseButton1Down:Connect(function() upForce = 1 end)
+    upBtn.MouseButton1Up:Connect(function() upForce = 0 end)
+    upBtn.InputEnded:Connect(function() upForce = 0 end)
+    
+    local dnBtn = Instance.new("TextButton")
+    dnBtn.Size = UDim2.new(0.45, -4, 0, 24)
+    dnBtn.Position = UDim2.new(0.55, 0, 0, ry)
+    dnBtn.Text = "DN"
+    dnBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    dnBtn.BackgroundColor3 = Color3.fromRGB(200,100,0)
+    dnBtn.Font = Enum.Font.GothamBold
+    dnBtn.TextSize = 10
+    dnBtn.Parent = rightScroll
+    dnBtn.MouseButton1Down:Connect(function() downForce = -1 end)
+    dnBtn.MouseButton1Up:Connect(function() downForce = 0 end)
+    dnBtn.InputEnded:Connect(function() downForce = 0 end)
+    ry = ry + 28
+    
+    flySpeedVal = AddSlider("Kecepatan Fly", flySpeed, 0.5, 10, function(val)
+        flySpeed = val
+    end)
+    ry = ry + 5
+    
+    rightScroll.CanvasSize = UDim2.new(0, 0, 0, ry + 30)
+end
 
--- GOD MODE
-local godTitle = Instance.new("TextLabel")
-godTitle.Size = UDim2.new(1, -6, 0, 16)
-godTitle.Position = UDim2.new(0, 3, 0, y)
-godTitle.Text = "🛡️ GOD MODE"
-godTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
-godTitle.BackgroundTransparency = 1
-godTitle.Font = Enum.Font.GothamBold
-godTitle.TextSize = 9
-godTitle.Parent = scroll
-y = y + 18
+local function BuildPlayerContent()
+    ry = 5
+    AddSeparator("PLAYER MENU")
+    
+    speedBtn = AddToggle("Speed Boost", speedBoost, function() 
+        speedBoost = not speedBoost
+        speedBtn.Text = speedBoost and "Speed Boost [ON]" or "Speed Boost [OFF]"
+        speedBtn.BackgroundColor3 = speedBoost and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+        ApplySpeed()
+    end)
+    speedVal = AddSlider("Speed Value", speedValue, 25, 999, function(val)
+        speedValue = val
+        ApplySpeed()
+    end)
+    ry = ry + 5
+    
+    jumpBtn = AddToggle("Jump Boost", jumpBoost, function() 
+        jumpBoost = not jumpBoost
+        jumpBtn.Text = jumpBoost and "Jump Boost [ON]" or "Jump Boost [OFF]"
+        jumpBtn.BackgroundColor3 = jumpBoost and Color3.fromRGB(0,180,0) or Color3.fromRGB(180,0,0)
+        ApplyJump()
+    end)
+    jumpVal = AddSlider("Jump Value", jumpValue, 50, 999, function(val)
+        jumpValue = val
+        ApplyJump()
+    end)
+    ry = ry + 5
+    
+    AddSeparator("HITBOX EXPANDER")
+    
+    -- Hitbox Expander Toggle
+    hitboxExpanderBtn = AddToggle("Hitbox Expander", hitboxExpanderEnabled, function() 
+        hitboxExpanderEnabled = not hitboxExpanderEnabled
+        if hitboxExpanderEnabled then
+            hitboxExpanderBtn.Text = "Hitbox Expander [ON]"
+            hitboxExpanderBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+            ExpandHitbox()
+        else
+            hitboxExpanderBtn.Text = "Hitbox Expander [OFF]"
+            hitboxExpanderBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+            ResetHitbox()
+        end
+    end)
+    
+    -- Expander Slider (0-100%)
+    expanderLabel = Instance.new("TextLabel")
+    expanderLabel.Size = UDim2.new(0.5, 0, 0, 20)
+    expanderLabel.Position = UDim2.new(0, 3, 0, ry)
+    expanderLabel.Text = "Expand: 0%"
+    expanderLabel.TextColor3 = Color3.fromRGB(200,200,220)
+    expanderLabel.BackgroundTransparency = 1
+    expanderLabel.Font = Enum.Font.GothamBold
+    expanderLabel.TextSize = 8
+    expanderLabel.Parent = rightScroll
+    
+    local expanderMinus = Instance.new("TextButton")
+    expanderMinus.Size = UDim2.new(0, 18, 0, 18)
+    expanderMinus.Position = UDim2.new(1, -40, 0, ry)
+    expanderMinus.Text = "-"
+    expanderMinus.TextColor3 = Color3.fromRGB(255,255,255)
+    expanderMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+    expanderMinus.Font = Enum.Font.GothamBold
+    expanderMinus.TextSize = 12
+    expanderMinus.Parent = rightScroll
+    
+    local expanderPlus = Instance.new("TextButton")
+    expanderPlus.Size = UDim2.new(0, 18, 0, 18)
+    expanderPlus.Position = UDim2.new(1, -20, 0, ry)
+    expanderPlus.Text = "+"
+    expanderPlus.TextColor3 = Color3.fromRGB(255,255,255)
+    expanderPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
+    expanderPlus.Font = Enum.Font.GothamBold
+    expanderPlus.TextSize = 12
+    expanderPlus.Parent = rightScroll
+    
+    expanderMinus.MouseButton1Click:Connect(function() 
+        hitboxExpander = math.max(0, hitboxExpander - 5)
+        expanderLabel.Text = "Expand: "..hitboxExpander.."%"
+        if hitboxExpanderEnabled then ExpandHitbox() end
+    end)
+    expanderPlus.MouseButton1Click:Connect(function() 
+        hitboxExpander = math.min(100, hitboxExpander + 5)
+        expanderLabel.Text = "Expand: "..hitboxExpander.."%"
+        if hitboxExpanderEnabled then ExpandHitbox() end
+    end)
+    ry = ry + 24
+    
+    AddSeparator("HITBOX ESP")
+    
+    -- Hitbox ESP Toggle (terpisah dari Box ESP, gak perlu Master ESP)
+    hitboxBtn = AddToggle("Hitbox ESP", espHitbox, function() 
+        espHitbox = not espHitbox
+        if espHitbox then
+            hitboxBtn.Text = "Hitbox ESP [ON]"
+            hitboxBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+        else
+            hitboxBtn.Text = "Hitbox ESP [OFF]"
+            hitboxBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+        end
+    end)
+    
+    -- Hitbox Ketebalan
+    hitboxThickVal = AddSlider("Hitbox Tebal", hitboxThick, 1, 5, function(val)
+        hitboxThick = val
+        RefreshESP()
+    end)
+    ry = ry + 5
+    
+    rightScroll.CanvasSize = UDim2.new(0, 0, 0, ry + 30)
+end
 
-godModeBtn = Instance.new("TextButton")
-godModeBtn.Size = UDim2.new(1, -6, 0, 26)
-godModeBtn.Position = UDim2.new(0, 3, 0, y)
-godModeBtn.Text = "GOD MODE"
-godModeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-godModeBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-godModeBtn.Font = Enum.Font.GothamBold
-godModeBtn.TextSize = 8
-godModeBtn.Parent = scroll
-y = y + 30
+local function BuildBetaContent()
+    ry = 5
+    AddSeparator("BETA TEST")
+    multiIncomeBtn = AddToggle("Multi Pendapatan", multiIncomeEnabled, function() 
+        multiIncomeEnabled = not multiIncomeEnabled
+        if multiIncomeEnabled then
+            EnableMultiIncome()
+            multiIncomeBtn.Text = "Multi Pendapatan [ON]"
+            multiIncomeBtn.BackgroundColor3 = Color3.fromRGB(0,180,0)
+            statusText.Text = "Multi Pendapatan "..incomeMultiplier.."x Aktif"
+        else
+            DisableMultiIncome()
+            multiIncomeBtn.Text = "Multi Pendapatan [OFF]"
+            multiIncomeBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
+            statusText.Text = "Multi Pendapatan Mati"
+        end
+        statusText.TextColor3 = Color3.fromRGB(0,255,0)
+        task.wait(0.5)
+        statusText.Text = "Ready"
+    end)
+    multiVal = AddSlider("Multiplier", incomeMultiplier, 1, 999, function(val)
+        incomeMultiplier = val
+        if multiIncomeEnabled then
+            statusText.Text = "Multiplier: "..incomeMultiplier.."x"
+            task.wait(0.5)
+            statusText.Text = "Ready"
+        end
+    end)
+    ry = ry + 5
+    
+    local info = Instance.new("TextLabel")
+    info.Size = UDim2.new(1, -6, 0, 40)
+    info.Position = UDim2.new(0, 3, 0, ry)
+    info.Text = "Kali semua pendapatan:\nEXP, Gold, Money, Gems, dll"
+    info.TextColor3 = Color3.fromRGB(100, 200, 255)
+    info.BackgroundColor3 = Color3.fromRGB(25,25,35)
+    info.BackgroundTransparency = 0
+    info.Font = Enum.Font.Gotham
+    info.TextSize = 7
+    info.Parent = rightScroll
+    ry = ry + 44
+    
+    rightScroll.CanvasSize = UDim2.new(0, 0, 0, ry + 30)
+end
 
--- SUPER BRUTAL
-local hitTitle = Instance.new("TextLabel")
-hitTitle.Size = UDim2.new(1, -6, 0, 16)
-hitTitle.Position = UDim2.new(0, 3, 0, y)
-hitTitle.Text = "💀 SUPER BRUTAL"
-hitTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
-hitTitle.BackgroundTransparency = 1
-hitTitle.Font = Enum.Font.GothamBold
-hitTitle.TextSize = 9
-hitTitle.Parent = scroll
-y = y + 18
+-- ===== FUNGSI SWITCH KATEGORI =====
+local function SwitchCategory(cat)
+    currentCategory = cat
+    
+    for _, child in pairs(rightScroll:GetChildren()) do
+        child:Destroy()
+    end
+    
+    ry = 5
+    
+    if cat == "ESP MENU" then
+        BuildESPContent()
+    elseif cat == "SPECIAL MENU" then
+        BuildSpecialContent()
+    elseif cat == "PLAYER MENU" then
+        BuildPlayerContent()
+    elseif cat == "BETA TEST" then
+        BuildBetaContent()
+    end
+    
+    for name, btn in pairs(categoryBtns) do
+        if name == cat then
+            btn.BackgroundColor3 = Color3.fromRGB(155, 0, 255)
+        else
+            btn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+        end
+    end
+    
+    rightScroll.CanvasPosition = Vector2.new(0, 0)
+    statusText.Text = "Kategori: " .. cat
+    statusText.TextColor3 = Color3.fromRGB(0,255,255)
+    task.wait(0.3)
+    statusText.Text = "Ready"
+    statusText.TextColor3 = Color3.fromRGB(0,255,0)
+end
 
-attackBtn = Instance.new("TextButton")
-attackBtn.Size = UDim2.new(1, -6, 0, 34)
-attackBtn.Position = UDim2.new(0, 3, 0, y)
-attackBtn.Text = "⚔️ SERANG SEMUA ⚔️"
-attackBtn.TextColor3 = Color3.fromRGB(255,255,255)
-attackBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
-attackBtn.Font = Enum.Font.GothamBold
-attackBtn.TextSize = 9
-attackBtn.Parent = scroll
-y = y + 38
+for name, btn in pairs(categoryBtns) do
+    btn.MouseButton1Click:Connect(function()
+        SwitchCategory(name)
+    end)
+end
 
-autoBtn = Instance.new("TextButton")
-autoBtn.Size = UDim2.new(1, -6, 0, 24)
-autoBtn.Position = UDim2.new(0, 3, 0, y)
-autoBtn.Text = "AUTO HIT"
-autoBtn.TextColor3 = Color3.fromRGB(255,255,255)
-autoBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-autoBtn.Font = Enum.Font.GothamBold
-autoBtn.TextSize = 8
-autoBtn.Parent = scroll
-y = y + 28
-
-autoStatus = Instance.new("TextLabel")
-autoStatus.Size = UDim2.new(1, -6, 0, 14)
-autoStatus.Position = UDim2.new(0, 3, 0, y)
-autoStatus.Text = "○ INACTIVE"
-autoStatus.TextColor3 = Color3.fromRGB(255,100,100)
-autoStatus.BackgroundTransparency = 1
-autoStatus.Font = Enum.Font.GothamBold
-autoStatus.TextSize = 7
-autoStatus.Parent = scroll
-y = y + 16
-
-local infoLabel = Instance.new("TextLabel")
-infoLabel.Size = UDim2.new(1, -6, 0, 28)
-infoLabel.Position = UDim2.new(0, 3, 0, y)
-infoLabel.Text = "⚡ DAMAGE: 999999\n🌍 RADIUS: INFINITY"
-infoLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-infoLabel.BackgroundColor3 = Color3.fromRGB(25,25,35)
-infoLabel.BackgroundTransparency = 0
-infoLabel.Font = Enum.Font.GothamBold
-infoLabel.TextSize = 7
-infoLabel.Parent = scroll
-y = y + 32
-
--- MULTI PENDAPATAN
-local multiTitle = Instance.new("TextLabel")
-multiTitle.Size = UDim2.new(1, -6, 0, 16)
-multiTitle.Position = UDim2.new(0, 3, 0, y)
-multiTitle.Text = "💰 MULTI PENDAPATAN"
-multiTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
-multiTitle.BackgroundTransparency = 1
-multiTitle.Font = Enum.Font.GothamBold
-multiTitle.TextSize = 9
-multiTitle.Parent = scroll
-y = y + 18
-
-multiIncomeBtn = Instance.new("TextButton")
-multiIncomeBtn.Size = UDim2.new(1, -6, 0, 26)
-multiIncomeBtn.Position = UDim2.new(0, 3, 0, y)
-multiIncomeBtn.Text = "MULTI PENDAPATAN"
-multiIncomeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-multiIncomeBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-multiIncomeBtn.Font = Enum.Font.GothamBold
-multiIncomeBtn.TextSize = 8
-multiIncomeBtn.Parent = scroll
-y = y + 30
-
-multiplierLabel = Instance.new("TextLabel")
-multiplierLabel.Size = UDim2.new(0.5, 0, 0, 22)
-multiplierLabel.Position = UDim2.new(0, 3, 0, y)
-multiplierLabel.Text = "MULTI: 10x"
-multiplierLabel.TextColor3 = Color3.fromRGB(200,200,220)
-multiplierLabel.BackgroundTransparency = 1
-multiplierLabel.Font = Enum.Font.GothamBold
-multiplierLabel.TextSize = 8
-multiplierLabel.Parent = scroll
-
-local multiMinus = Instance.new("TextButton")
-multiMinus.Size = UDim2.new(0, 18, 0, 18)
-multiMinus.Position = UDim2.new(1, -40, 0, y)
-multiMinus.Text = "-"
-multiMinus.TextColor3 = Color3.fromRGB(255,255,255)
-multiMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-multiMinus.Font = Enum.Font.GothamBold
-multiMinus.TextSize = 12
-multiMinus.Parent = scroll
-
-local multiPlus = Instance.new("TextButton")
-multiPlus.Size = UDim2.new(0, 18, 0, 18)
-multiPlus.Position = UDim2.new(1, -20, 0, y)
-multiPlus.Text = "+"
-multiPlus.TextColor3 = Color3.fromRGB(255,255,255)
-multiPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-multiPlus.Font = Enum.Font.GothamBold
-multiPlus.TextSize = 12
-multiPlus.Parent = scroll
-y = y + 26
-
-local multiInfo = Instance.new("TextLabel")
-multiInfo.Size = UDim2.new(1, -6, 0, 28)
-multiInfo.Position = UDim2.new(0, 3, 0, y)
-multiInfo.Text = "🎯 EXP, GOLD, MONEY, GEMS\n💰 SEMUA PENDAPATAN DI KALI"
-multiInfo.TextColor3 = Color3.fromRGB(100, 200, 255)
-multiInfo.BackgroundColor3 = Color3.fromRGB(25,25,35)
-multiInfo.BackgroundTransparency = 0
-multiInfo.Font = Enum.Font.Gotham
-multiInfo.TextSize = 7
-multiInfo.Parent = scroll
-y = y + 32
-
--- BOOST MENU
-local boostTitle = Instance.new("TextLabel")
-boostTitle.Size = UDim2.new(1, -6, 0, 16)
-boostTitle.Position = UDim2.new(0, 3, 0, y)
-boostTitle.Text = "🏃 BOOST MENU"
-boostTitle.TextColor3 = Color3.fromRGB(155, 0, 255)
-boostTitle.BackgroundTransparency = 1
-boostTitle.Font = Enum.Font.GothamBold
-boostTitle.TextSize = 9
-boostTitle.Parent = scroll
-y = y + 18
-
-speedBtn = Instance.new("TextButton")
-speedBtn.Size = UDim2.new(1, -6, 0, 22)
-speedBtn.Position = UDim2.new(0, 3, 0, y)
-speedBtn.Text = "SPEED BOOST"
-speedBtn.TextColor3 = Color3.fromRGB(255,255,255)
-speedBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-speedBtn.Font = Enum.Font.GothamBold
-speedBtn.TextSize = 8
-speedBtn.Parent = scroll
-y = y + 26
-
-speedValLabel = Instance.new("TextLabel")
-speedValLabel.Size = UDim2.new(0.5, 0, 0, 20)
-speedValLabel.Position = UDim2.new(0, 3, 0, y)
-speedValLabel.Text = "SPEED: 200"
-speedValLabel.TextColor3 = Color3.fromRGB(200,200,220)
-speedValLabel.BackgroundTransparency = 1
-speedValLabel.Font = Enum.Font.GothamBold
-speedValLabel.TextSize = 8
-speedValLabel.Parent = scroll
-
-local speedMinus = Instance.new("TextButton")
-speedMinus.Size = UDim2.new(0, 18, 0, 18)
-speedMinus.Position = UDim2.new(1, -40, 0, y)
-speedMinus.Text = "-"
-speedMinus.TextColor3 = Color3.fromRGB(255,255,255)
-speedMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-speedMinus.Font = Enum.Font.GothamBold
-speedMinus.TextSize = 12
-speedMinus.Parent = scroll
-
-local speedPlus = Instance.new("TextButton")
-speedPlus.Size = UDim2.new(0, 18, 0, 18)
-speedPlus.Position = UDim2.new(1, -20, 0, y)
-speedPlus.Text = "+"
-speedPlus.TextColor3 = Color3.fromRGB(255,255,255)
-speedPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-speedPlus.Font = Enum.Font.GothamBold
-speedPlus.TextSize = 12
-speedPlus.Parent = scroll
-y = y + 24
-
-jumpBtn = Instance.new("TextButton")
-jumpBtn.Size = UDim2.new(1, -6, 0, 22)
-jumpBtn.Position = UDim2.new(0, 3, 0, y)
-jumpBtn.Text = "JUMP BOOST"
-jumpBtn.TextColor3 = Color3.fromRGB(255,255,255)
-jumpBtn.BackgroundColor3 = Color3.fromRGB(180,0,0)
-jumpBtn.Font = Enum.Font.GothamBold
-jumpBtn.TextSize = 8
-jumpBtn.Parent = scroll
-y = y + 26
-
-jumpValLabel = Instance.new("TextLabel")
-jumpValLabel.Size = UDim2.new(0.5, 0, 0, 20)
-jumpValLabel.Position = UDim2.new(0, 3, 0, y)
-jumpValLabel.Text = "JUMP: 200"
-jumpValLabel.TextColor3 = Color3.fromRGB(200,200,220)
-jumpValLabel.BackgroundTransparency = 1
-jumpValLabel.Font = Enum.Font.GothamBold
-jumpValLabel.TextSize = 8
-jumpValLabel.Parent = scroll
-
-local jumpMinus = Instance.new("TextButton")
-jumpMinus.Size = UDim2.new(0, 18, 0, 18)
-jumpMinus.Position = UDim2.new(1, -40, 0, y)
-jumpMinus.Text = "-"
-jumpMinus.TextColor3 = Color3.fromRGB(255,255,255)
-jumpMinus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-jumpMinus.Font = Enum.Font.GothamBold
-jumpMinus.TextSize = 12
-jumpMinus.Parent = scroll
-
-local jumpPlus = Instance.new("TextButton")
-jumpPlus.Size = UDim2.new(0, 18, 0, 18)
-jumpPlus.Position = UDim2.new(1, -20, 0, y)
-jumpPlus.Text = "+"
-jumpPlus.TextColor3 = Color3.fromRGB(255,255,255)
-jumpPlus.BackgroundColor3 = Color3.fromRGB(55,55,75)
-jumpPlus.Font = Enum.Font.GothamBold
-jumpPlus.TextSize = 12
-jumpPlus.Parent = scroll
-y = y + 24
-
+-- ===== STATUS =====
 statusText = Instance.new("TextLabel")
-statusText.Size = UDim2.new(1, -6, 0, 22)
-statusText.Position = UDim2.new(0, 3, 0, y)
-statusText.Text = "✓ VORTEX READY"
+statusText.Size = UDim2.new(1, -8, 0, 24)
+statusText.Position = UDim2.new(0, 4, 1, -28)
+statusText.Text = "Ready"
 statusText.TextColor3 = Color3.fromRGB(0,255,0)
-statusText.BackgroundColor3 = Color3.fromRGB(25,25,35)
+statusText.BackgroundColor3 = Color3.fromRGB(20,20,30)
 statusText.BackgroundTransparency = 0
 statusText.Font = Enum.Font.GothamBold
 statusText.TextSize = 8
-statusText.Parent = scroll
-y = y + 26
-
-scroll.CanvasSize = UDim2.new(0, 0, 0, y + 30)
-
--- ========== CONNECT ==========
-masterBtn.MouseButton1Click:Connect(ToggleMaster)
-boxBtn.MouseButton1Click:Connect(ToggleBox)
-tracerBtn.MouseButton1Click:Connect(ToggleTracer)
-nameBtn.MouseButton1Click:Connect(ToggleName)
-attackBtn.MouseButton1Click:Connect(ManualAttack)
-autoBtn.MouseButton1Click:Connect(ToggleAuto)
-speedBtn.MouseButton1Click:Connect(ToggleSpeed)
-jumpBtn.MouseButton1Click:Connect(ToggleJump)
-noclipBtn.MouseButton1Click:Connect(ToggleNoclip)
-godModeBtn.MouseButton1Click:Connect(ToggleGod)
-multiIncomeBtn.MouseButton1Click:Connect(ToggleMultiIncome)
-
-thickMinus.MouseButton1Click:Connect(function() UpdateThick(-1) end)
-thickPlus.MouseButton1Click:Connect(function() UpdateThick(1) end)
-speedMinus.MouseButton1Click:Connect(function() UpdateSpeedVal(-25) end)
-speedPlus.MouseButton1Click:Connect(function() UpdateSpeedVal(25) end)
-jumpMinus.MouseButton1Click:Connect(function() UpdateJumpVal(-25) end)
-jumpPlus.MouseButton1Click:Connect(function() UpdateJumpVal(25) end)
-multiMinus.MouseButton1Click:Connect(function() UpdateMultiplier(-1) end)
-multiPlus.MouseButton1Click:Connect(function() UpdateMultiplier(1) end)
+statusText.Parent = frame
+local stCorner = Instance.new("UICorner")
+stCorner.CornerRadius = UDim.new(0, 4)
+stCorner.Parent = statusText
 
 -- ========== DRAG ==========
 local drag = false
@@ -1035,13 +1262,19 @@ end)
 local min = false
 minBtn.MouseButton1Click:Connect(function()
     if min then
-        frame.Size = UDim2.new(0, 170, 0, 520)
-        scroll.Visible = true
+        frame.Size = UDim2.new(0, 340, 0, 520)
+        leftScroll.Visible = true
+        rightScroll.Visible = true
+        divider.Visible = true
+        statusText.Visible = true
         minBtn.Text = "-"
         min = false
     else
-        frame.Size = UDim2.new(0, 100, 0, 28)
-        scroll.Visible = false
+        frame.Size = UDim2.new(0, 100, 0, 30)
+        leftScroll.Visible = false
+        rightScroll.Visible = false
+        divider.Visible = false
+        statusText.Visible = false
         minBtn.Text = "+"
         min = true
     end
@@ -1049,15 +1282,17 @@ end)
 
 -- ========== CLOSE ==========
 closeBtn.MouseButton1Click:Connect(function()
-    StopAutoHit()
     DisableNoclip()
-    DisableGodMode()
     DisableMultiIncome()
+    StopFly()
+    ResetHitbox()
     gui:Destroy()
     for _, esp in pairs(espObjects) do
         if esp.box then esp.box:Remove() end
-        if esp.tracer then esp.tracer:Remove() end
+        if esp.line then esp.line:Remove() end
         if esp.nameTag then esp.nameTag:Remove() end
+        if esp.distanceTag then esp.distanceTag:Remove() end
+        if esp.hitbox then esp.hitbox:Remove() end
     end
     for _, conn in pairs(espConnections) do
         if conn then conn:Disconnect() end
@@ -1079,24 +1314,16 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     ApplySpeed()
     ApplyJump()
     if noclipEnabled then EnableNoclip() end
-    if godModeEnabled then EnableGodMode() end
-    if autoHit then StartAutoHit() end
 end)
 if LocalPlayer.Character then
     origSpeed = LocalPlayer.Character.Humanoid.WalkSpeed
     origJump = LocalPlayer.Character.Humanoid.JumpPower
 end
 
-RunService.RenderStepped:Connect(function()
-    -- Update ESP sudah jalan dari masing-masing connection
-end)
+task.wait(0.1)
+SwitchCategory("ESP MENU")
 
 print("========================")
-print("💀 VORTEX FINAL ULTIMATE 💀")
-print("✅ ESP BOX WHITE - WORK ALL GAME")
-print("✅ KETEBALAN ESP BISA DIATUR (1-5)")
-print("✅ WALLHACK + GOD MODE")
-print("✅ AUTO HIT (999999 DAMAGE)")
-print("💰 MULTI PENDAPATAN (1x-999x)")
-print("✅ SCROLL PANJANG")
+print("VORTEX - HITBOX EXPANDER + ESP HITBOX")
+print("HITBOX ESP TERSENDIRI (GAK PERLU MASTER ESP)")
 print("========================")

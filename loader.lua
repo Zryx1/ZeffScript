@@ -1,21 +1,25 @@
-
 -- ========================================
--- VORTEX LOADER
--- Load Menu + Fungsi sekaligus
+-- VORTEX LOADER - LOAD DARI GITHUB
 -- ========================================
 
-print("Loading VORTEX...")
+print("Loading VORTEX from GitHub...")
 
--- Load fungsi dulu
-local fungsi = loadstring(game:HttpGet("https://zeffvortexscript.vercel.app/fungsi.lua"))()
+-- Load fungsi
+local fungsi = loadstring(game:HttpGet("https://raw.githubusercontent.com/Zryx1/ZeffScript/main/fungsi.lua"))()
 if fungsi then
-    print("Fungsi loaded!")
+    print("[VORTEX] Fungsi loaded!")
+else
+    warn("[VORTEX] Gagal load fungsi!")
 end
 
 -- Load menu
-local menu = loadstring(game:HttpGet("https://zeffvortexscript.vercel.app/menu.lua"))()
+local menu = loadstring(game:HttpGet("https://raw.githubusercontent.com/Zryx1/ZeffScript/main/menu.lua"))()
 if menu then
-    print("Menu loaded!")
+    print("[VORTEX] Menu loaded!")
+else
+    warn("[VORTEX] Gagal load menu!")
 end
 
+print("========================")
 print("VORTEX READY!")
+print("========================")

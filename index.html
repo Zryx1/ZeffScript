@@ -71,7 +71,7 @@
             color: #8888bb;
         }
 
-        /* ===== VIDEO ===== */
+        /* ===== VIDEO (LEBIH TINGGI) ===== */
         .video-wrapper {
             position: relative;
             border: 1.5px solid rgba(139, 0, 255, 0.12);
@@ -84,7 +84,7 @@
 
         .video-wrapper video {
             width: 100%;
-            max-height: 260px;
+            max-height: 300px;
             object-fit: cover;
             border-radius: 9px;
             display: block;
@@ -216,14 +216,14 @@
         @media (max-width: 420px) {
             .container { padding: 20px 14px 18px; }
             .logo { font-size: 20px; letter-spacing: 8px; }
-            .video-wrapper video { max-height: 180px; }
+            .video-wrapper video { max-height: 220px; }
             .script-box code { font-size: 9px; }
             .sound-btn { width: 28px; height: 28px; font-size: 10px; bottom: 8px; right: 8px; }
             .copy-btn { min-width: 120px; padding: 6px 16px; font-size: 9px; }
         }
 
         @media (max-width: 340px) {
-            .video-wrapper video { max-height: 140px; }
+            .video-wrapper video { max-height: 170px; }
             .container { padding: 14px 10px 14px; }
             .logo { font-size: 16px; letter-spacing: 6px; }
         }
@@ -236,7 +236,7 @@
     <div class="logo"><strong>VORTEX</strong></div>
     <div class="subtitle">project <span>by zeff</span></div>
 
-    <!-- VIDEO -->
+    <!-- VIDEO (LEBIH TINGGI) -->
     <div class="video-wrapper">
         <video id="mainVideo" autoplay loop muted playsinline preload="metadata">
             <source src="https://files.catbox.moe/oh9g1h.mp4" type="video/mp4" />
@@ -288,17 +288,14 @@
         document.getElementById('soundToggle').addEventListener('click', toggleSound);
         video.addEventListener('click', toggleSound);
 
-        // Play otomatis
         video.addEventListener('loadeddata', function() {
             video.play().catch(function() {});
         });
 
-        // Fallback
         setTimeout(function() {
             video.play().catch(function() {});
         }, 300);
 
-        // Pause kalo gak keliatan
         if ('IntersectionObserver' in window) {
             const observer = new IntersectionObserver(function(entries) {
                 entries.forEach(function(entry) {
@@ -340,7 +337,6 @@
             });
         });
 
-        // ===== CLEANUP =====
         window.addEventListener('beforeunload', function() {
             video.pause();
             video.src = '';
